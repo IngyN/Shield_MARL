@@ -14,3 +14,5 @@ import multiagent.scenarios as scenarios
 scenario = scenarios.load("simple" + ".py").Scenario()
 world = scenario.make_world()
 trainer = MADDPGAgentTrainer
+
+# TODO actually train.
