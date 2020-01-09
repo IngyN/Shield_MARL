@@ -1,3 +1,4 @@
+import gym
 from gym_grid_ma import GridEnv  # yet to be installed
 
 nepisodes = 20
