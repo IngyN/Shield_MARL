@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import time
+from gym_grid.envs import GridEnv
 
 
 class QLearning:
@@ -25,12 +27,13 @@ class QLearning:
         o_value = (1 - self.alpha) * self.qvalues[pos[0]][pos[1]][action]
         self.qvalues[pos[0]][pos[1]][action] = self.alpha * (reward + self.discount * m_value) + o_value
 
-    def run(self, env, step_max=500, episode_max=1000):
+    def run(self, env, step_max=500, episode_max=1000, debug=False):
 
         env.reset()
         alpha_index = 1
         self.discount = 0.9
-        pos = env.pos
+        pos = env.pos[0]
+        # print(pos)
         steps = np.zeros([episode_max])
         stop = False
 
@@ -40,6 +43,11 @@ class QLearning:
                 action = self.action_selection(self.qvalues[pos[0]][pos[1]])
                 obs, rew, _, _ = env.step([action])
                 self.update(pos, obs[0], rew, action)
+
+                if debug:  # and s > step_max*0.6:
+                    time.sleep(2)
+                    env.render()
+
                 pos = obs[0]  # TODO check this - update position from observation
                 goal_flag = env.goal_flag
 
@@ -57,3 +65,12 @@ class QLearning:
                 break
 
         return self.qvalues
+
+
+if __name__ == "__main__":
+    env = GridEnv(agents=1)
+    singleQL = QLearning([env.nrows, env.ncols])
+    env.render()
+    input('next')
+    singleQL.run(env, step_max=400, episode_max=20, debug=True)
+    input('end')
