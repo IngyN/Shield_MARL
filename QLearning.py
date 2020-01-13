@@ -58,12 +58,12 @@ class QLearning:
                 if debug:  # and s > step_max*0.6:
                     print('action:', action, ' -- done: ', done,  ' -- goal_flag:', env.goal_flag, ' --- rewards: ', rew, ' -- pos: ', pos, ' -- obs: ', obs)
 
-                pos = deepcopy(obs[0])  # TODO check this - update position from observation
+                pos = deepcopy(obs[0])
 
                 if done:
                     if debug:
                         env.render()
-                    print('episode ', e, ' done')
+                    print('episode ', e+1, ' done')
                     break
 
             steps[e] = s
@@ -80,12 +80,12 @@ class QLearning:
 
 
 if __name__ == "__main__":
-    env = GridEnv(agents=1)
+    env = GridEnv(agents=1, map_name='MIT')
     singleQL = QLearning([env.nrows, env.ncols])
     env.render()
     # input('next')
-    qval = singleQL.run(env, step_max=400, episode_max=100, discount=0.9, debug=False)
+    qval = singleQL.run(env, step_max=1000, episode_max=500, discount=0.9, debug=False)
     # input('end')
     print('----------------------------------------------------------------- \n end of training -----------------------------------------------------------------')
-    singleQL.run(env, step_max=400, episode_max=10, testing=True, debug=True)
+    singleQL.run(env, step_max=400, episode_max=5, testing=True, debug=True)
     env.final_render()
