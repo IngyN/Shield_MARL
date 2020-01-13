@@ -24,9 +24,6 @@ class QLearning:
     def update(self, pos, obs, reward, action, debug):
         m_value = max(self.qvalues[obs[0]][obs[1]])
         o_value = (1 - self.alpha) * self.qvalues[pos[0]][pos[1]][action]
-        # if debug:
-        #     print('old val: ', self.qvalues[pos[0]][pos[1]][action])
-        #     print('new_val:', self.alpha * (reward + self.discount * m_value) + o_value)
         self.qvalues[pos[0]][pos[1]][action] = self.alpha * (reward + self.discount * m_value) + o_value
 
     def run(self, env, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False):
