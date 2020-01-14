@@ -41,7 +41,7 @@ class QLearning:
             for s in range(step_max):
 
                 if debug:
-                    env.render()
+                    env.render(episode=e + 1)
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
                 if not testing:
@@ -59,7 +59,7 @@ class QLearning:
 
                 if done:
                     if debug:
-                        env.render()
+                        env.render(e + 1)
                     print('episode ', e+1, ' done')
                     break
 
@@ -77,11 +77,11 @@ class QLearning:
 
 
 if __name__ == "__main__":
-    env = GridEnv(agents=1, map_name='MIT')
+    env = GridEnv(agents=1, map_name='ISR')
     singleQL = QLearning([env.nrows, env.ncols])
     env.render()
     # input('next')
-    qval = singleQL.run(env, step_max=1000, episode_max=500, discount=0.9, debug=False)
+    qval = singleQL.run(env, step_max=200, episode_max=100, discount=0.9, debug=False)
     # input('end')
     print('----------------------------------------------------------------- \n end of training -----------------------------------------------------------------')
     singleQL.run(env, step_max=400, episode_max=5, testing=True, debug=True)
