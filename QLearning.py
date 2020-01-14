@@ -36,7 +36,7 @@ class QLearning:
 
         for e in range(episode_max):
             env.reset()
-            pos = env.pos[0]
+            pos = deepcopy(env.pos[0])
 
             for s in range(step_max):
 
@@ -77,11 +77,11 @@ class QLearning:
 
 
 if __name__ == "__main__":
-    env = GridEnv(agents=1, map_name='MIT')
+    env = GridEnv(agents=1, map_name='ISR')
     singleQL = QLearning([env.nrows, env.ncols])
     env.render()
     # input('next')
-    qval = singleQL.run(env, step_max=1000, episode_max=500, discount=0.9, debug=False)
+    qval = singleQL.run(env, step_max=400, episode_max=100, discount=0.9, debug=False)
     # input('end')
     print('----------------------------------------------------------------- \n end of training -----------------------------------------------------------------')
     singleQL.run(env, step_max=400, episode_max=5, testing=True, debug=True)
