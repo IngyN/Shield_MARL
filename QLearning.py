@@ -26,13 +26,15 @@ class QLearning:
         o_value = (1 - self.alpha) * self.qvalues[pos[0]][pos[1]][action]
         self.qvalues[pos[0]][pos[1]][action] = self.alpha * (reward + self.discount * m_value) + o_value
 
-    def run(self, env, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False):
+    def run(self, env, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, save=False, N=10):
 
         alpha_index = 1
         self.discount = discount
         # print(pos)
-        steps = np.zeros([episode_max], dtype = int)
+        steps = np.zeros([episode_max], dtype=int)
         stop = False
+        if save:
+            hist = np.ones([env.nrows, env.ncols, self.nactions, N + 1], dtype=int) * np.nan
 
         for e in range(episode_max):
             env.reset()
@@ -49,11 +51,21 @@ class QLearning:
                 else:
                     action = self.action_selection(self.qvalues[pos[0]][pos[1]], epsilon=0)
                 obs, rew, _, done = env.step([action])
+
+                if save:
+                    index = hist[pos[0]][pos[1]][action][-1]
+                    if index < 0:
+                        index = 0
+
+                    hist[pos[0]][pos[1]][action][index] = rew
+                    hist[pos[0]][pos[1]][action][-1] = (index + 1) % N
+
                 if not testing:
                     self.update(pos, obs[0], rew, action, True)
 
                 if debug:  # and s > step_max*0.6:
-                    print('action:', action, ' -- done: ', done,  ' -- goal_flag:', env.goal_flag, ' --- rewards: ', rew, ' -- pos: ', pos, ' -- obs: ', obs)
+                    print('action:', action, ' -- done: ', done, ' -- goal_flag:', env.goal_flag, ' --- rewards: ', rew,
+                          ' -- pos: ', pos, ' -- obs: ', obs)
 
                 pos = deepcopy(obs[0])
 
@@ -72,8 +84,12 @@ class QLearning:
 
             if stop:
                 break
-        print(steps+1)
-        return self.qvalues
+        print(steps + 1)
+
+        if save:
+            return self.qvalues, hist
+        else:
+            return self.qvalues
 
 
 if __name__ == "__main__":
@@ -81,7 +97,7 @@ if __name__ == "__main__":
     singleQL = QLearning([env.nrows, env.ncols])
     env.render()
     # input('next')
-    qval = singleQL.run(env, step_max=1000, episode_max=500, discount=0.9, debug=False)
+    qval, hist = singleQL.run(env, step_max=1000, episode_max=500, discount=0.9, debug=False, save=True)
     # input('end')
     print('----------------------------------------------------------------- \n end of training -----------------------------------------------------------------')
     singleQL.run(env, step_max=400, episode_max=5, testing=True, debug=True)

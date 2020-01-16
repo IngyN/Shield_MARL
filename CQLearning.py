@@ -12,30 +12,44 @@ class CQLearning:
         self.nactions = nactions
         self.map_name = map_name
         self.env = GridEnv(agents=nagents, map_name=map_name)  # TODO: set up ma environment
+        self.nstates = self.env.nstates
 
         # individual/local info
-        self.qvalues = np.zeros([nagents, self.env.nrows, self.env.ncols, nactions])
+        self.qvalues = np.zeros([nagents, self.nstates, nactions])
         self.marks = np.zeros([nagents, self.env.nrows, self.env.ncols], dtype=int)  # 0 = unmarked, 1= safe, 2= unsafe
 
         # Joint info
-        self.dangerous_max = 200
+        self.dangerous_max = 50 * nagents
         self.joint_marks = np.zeros([self.dangerous_max, 3 * nagents], dtype=int)  # joint state marks
         dims = [self.dangerous_max, nagents]
-        dims.extend([nactions] * nagents)
+        dims.extend([self.nstates] * nagents)
+        dims.append(self.nactions)
         self.joint_qvalues = np.zeros(dims)
 
         # t-test vars
-        self.threshold = 0.05  # 5%
-        self.nsaved = 5
-        self.observed_rewards = np.zeros([self.env.nrows, self.env.ncols, nagents, self.nsaved + 1])
+        self.test_threshold = 0.05  # 5%
+        self.conf_threshold = 5
+        self.start_conf = 10
+        self.nsaved = 5  # history for observed/expected rewards
+
+        self.W1 = np.ones([nagents, self.nstates, nactions, self.nsaved + 1]) * np.nan  # nan vals were not initialized
+
+        self.initialize_qvalues()
+
+    def state_to_index(self, i, j):
+        return j + i * self.env.ncols
 
     def initialize_qvalues(self):
         single_env = GridEnv(agents=1, map_name=self.map_name)
         singleQL = QLearning([single_env.nrows, single_env.ncols])
 
         for a in range(self.nagents):
-            qval = singleQL.run(single_env, step_max=1000, episode_max=500, discount=0.9, debug=False)
+            qval, hist = singleQL.run(single_env, step_max=1000, episode_max=500, discount=0.9, debug=False, save=True,
+                                      N=self.nsaved)
             self.qvalues[a] = deepcopy(qval)
+            self.W1[a] = deepcopy(hist)
+
+        self.W2 = deepcopy(self.W1)
 
     def greedy_select(self, qval, epsilon=0.7):
         flag = random.random()
@@ -108,3 +122,7 @@ class CQLearning:
                 for a in range(self.nagents):
                     state = obs[a]
                     self.update(a, obs[a], rew[a])  # update marks and qvalues
+
+
+if __name__ == "__main__":
+    cq = CQLearning()
