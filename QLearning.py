@@ -54,10 +54,10 @@ class QLearning:
 
                 if save:
                     index = hist[pos[0]][pos[1]][action][-1]
-                    if index < 0:
+                    if index < 0 or np.isnan(index):
                         index = 0
 
-                    hist[pos[0]][pos[1]][action][index] = rew
+                    hist[pos[0]][pos[1]][action][int(index)] = rew
                     hist[pos[0]][pos[1]][action][-1] = (index + 1) % N
 
                 if not testing:
@@ -72,7 +72,7 @@ class QLearning:
                 if done:
                     if debug:
                         env.render()
-                    print('episode ', e+1, ' done')
+                        print('episode ', e + 1, ' done')
                     break
 
             steps[e] = s
@@ -84,7 +84,7 @@ class QLearning:
 
             if stop:
                 break
-        print(steps + 1)
+        # print(steps + 1)
 
         if save:
             return self.qvalues, hist
@@ -93,11 +93,11 @@ class QLearning:
 
 
 if __name__ == "__main__":
-    env = GridEnv(agents=1, map_name='MIT')
+    env = GridEnv(agents=1, map_name='ISR')
     singleQL = QLearning([env.nrows, env.ncols])
     env.render()
     # input('next')
-    qval, hist = singleQL.run(env, step_max=1000, episode_max=500, discount=0.9, debug=False, save=True)
+    qval, hist = singleQL.run(env, step_max=500, episode_max=100, discount=0.9, debug=False, save=True)
     # input('end')
     print('----------------------------------------------------------------- \n end of training -----------------------------------------------------------------')
     singleQL.run(env, step_max=400, episode_max=5, testing=True, debug=True)

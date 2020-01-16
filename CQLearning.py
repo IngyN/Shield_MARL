@@ -2,7 +2,7 @@ import numpy as np
 from QLearning import QLearning
 from copy import deepcopy
 from gym_grid.envs import GridEnv
-from scipy.stats import ttest_ind, ttest_ind_from_stats
+# from scipy.stats import ttest_ind, ttest_ind_from_stats
 import random
 
 
@@ -12,17 +12,16 @@ class CQLearning:
         self.nactions = nactions
         self.map_name = map_name
         self.env = GridEnv(agents=nagents, map_name=map_name)  # TODO: set up ma environment
-        self.nstates = self.env.nstates
 
         # individual/local info
-        self.qvalues = np.zeros([nagents, self.nstates, nactions])
+        self.qvalues = np.zeros([nagents, self.env.nrows, self.env.ncols, nactions])
         self.marks = np.zeros([nagents, self.env.nrows, self.env.ncols], dtype=int)  # 0 = unmarked, 1= safe, 2= unsafe
 
         # Joint info
         self.dangerous_max = 50 * nagents
         self.joint_marks = np.zeros([self.dangerous_max, 3 * nagents], dtype=int)  # joint state marks
         dims = [self.dangerous_max, nagents]
-        dims.extend([self.nstates] * nagents)
+        dims.extend([self.env.nrows, self.env.ncols] * nagents)
         dims.append(self.nactions)
         self.joint_qvalues = np.zeros(dims)
 
@@ -32,7 +31,8 @@ class CQLearning:
         self.start_conf = 10
         self.nsaved = 5  # history for observed/expected rewards
 
-        self.W1 = np.ones([nagents, self.nstates, nactions, self.nsaved + 1]) * np.nan  # nan vals were not initialized
+        self.W1 = np.ones([nagents, self.env.nrows, self.env.ncols, nactions,
+                           self.nsaved + 1]) * np.nan  # nan vals were not initialized
 
         self.initialize_qvalues()
 
@@ -44,7 +44,7 @@ class CQLearning:
         singleQL = QLearning([single_env.nrows, single_env.ncols])
 
         for a in range(self.nagents):
-            qval, hist = singleQL.run(single_env, step_max=1000, episode_max=500, discount=0.9, debug=False, save=True,
+            qval, hist = singleQL.run(single_env, step_max=400, episode_max=150, discount=0.9, debug=False, save=True,
                                       N=self.nsaved)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
@@ -126,3 +126,4 @@ class CQLearning:
 
 if __name__ == "__main__":
     cq = CQLearning()
+    print('done')
