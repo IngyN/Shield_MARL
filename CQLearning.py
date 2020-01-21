@@ -18,8 +18,14 @@ class CQLearning:
         self.marks = np.zeros([nagents, self.env.nrows, self.env.ncols], dtype=int)  # 0 = unmarked, 1= safe, 2= unsafe
 
         # Joint info
-        self.dangerous_max = 50 * nagents
-        self.joint_marks = np.zeros([self.dangerous_max, 3 * nagents], dtype=int)  # joint state marks
+        self.dangerous_max = 50
+        dims = [self.dangerous_max]
+        dims.extend([self.env.nrows, self.env.ncols, self.nactions] * nagents)
+        dims.append(1)
+        self.joint_marks = np.zeros([self.nagents, self.dangerous_max, 2 * self.nagents + 1],
+                                    dtype=int)  # joint state marks
+        # i, row,col,.., row,col, action_i, confidence
+        # TODO check dims are applied correctly.
         dims = [self.dangerous_max, nagents]
         dims.extend([self.env.nrows, self.env.ncols] * nagents)
         dims.append(self.nactions)
@@ -28,13 +34,14 @@ class CQLearning:
         # t-test vars
         self.test_threshold = 0.05  # 5%
         self.conf_threshold = 5
+        self.conf_max = 50
         self.start_conf = 10
         self.nsaved = 5  # history for observed/expected rewards
 
         self.W1 = np.ones([nagents, self.env.nrows, self.env.ncols, nactions,
                            self.nsaved + 1]) * np.nan  # nan vals were not initialized
 
-        self.initialize_qvalues()
+        # self.initialize_qvalues()
 
     def state_to_index(self, i, j):
         return j + i * self.env.ncols
@@ -51,7 +58,7 @@ class CQLearning:
 
         self.W2 = deepcopy(self.W1)
 
-    def greedy_select(self, qval, epsilon=0.7):
+    def greedy_select(self, qval, epsilon=0.4):
         flag = random.random()
         if flag >= epsilon:
             action = np.argmax(qval)  # choose from qvalues
@@ -59,13 +66,74 @@ class CQLearning:
             action = random.randint(0, self.nactions - 1)  # choose from random
         return action
 
-    def action_selection(self, state, i):
+    def retrieve_js(self, states, a):
+        ret = np.ones([1, 2 * self.nagents + 1], dtype=int) * -1
+        ind = []
+        for i in range(self.joint_marks.shape[0]):
+            if np.all(self.joint_marks[a][i][2 * a:2 * a + 2] == states[a]):
+                if np.all(ret[0] == np.ones([2 * self.nagents + 1], dtype=int) * -1):
+                    ret[0] = self.joint_marks[a][i]
+                    ind.append(i)
+                else:
+                    ret = np.vstack([ret, self.joint_marks[a][i]])
+                    ind.append(i)
+        return ret, ind
+
+    def action_selection(self, states, i):
+        a = 0
+        if self.marks[i][states[i][0]][states[i][1]] == 2:  # unsafe
+            ret, indices = self.retrieve_js(states, i)
+            if len(indices) == 0:  # no matching marks for joint states.
+                a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]])
+                self.marks[i][states[i][0]][states[i][1]] = 0  # unmark since it wasnt found -> removed somewhere else
+            else:  # check if state infor for the others is the same
+                same = np.ones([ret.shape[0], self.nagents], dtype=int) * -1
+                same[:, i] = 1
+                for row, index in enumerate(ret):
+                    for a in range(self.nagents):
+                        if a != i:
+                            if np.all(row[2 * a:2 * a + 2] == states[a]):
+                                same[index] = 1
+                found = False
+                for row, j in enumerate(same):
+                    if np.all(row == np.ones([self.nagents])):  # found one that matches. Should not have duplicates
+                        found = True
+                        if ret[j][-1] < self.conf_max:
+                            self.joint_marks[i][indices[j]][-1] += 1
+                        # TODO: greedy select from joint
+                        a = self.greedy_select(self.joint_qvalues[i][states[i][0]][states[i][1]])
+                    else:
+                        if ret[j][-1] > 0:
+                            self.joint_marks[i][indices[j]][-1] -= 1
+                            # TODO: check for lowest conf and remove from joint_Qvalues
+
+                if not found:
+                    a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]])
+
+        else:  # unmarked or safe
+            a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]])
+
+        return a
+
+    def action_selection_all(self, states):
         # TODO : select action based on marked and previous Q-values
-        if self.marks[i][state[0]][state[1]] == 0:  # if local state is unmarked.
-            a = self.greedy_select(self.qvalues[i][state[0]][state[1]])
+        all_safe = True
+        actions = np.zeros([self.nagents], dtype=int)
+
+        for i in range(self.nagents):
+            if self.marks[i][states[i][0]][states[i][1]] == 2:
+                all_safe = False
+                break
+
+        if all_safe:
+            for a in range(self.nagents):
+                actions[a] = self.greedy_select(self.qvalues[a][states[a][0]][states[a][1]])  # TODO: decreasing epsilon
+
+        if self.marks[i][states[0]][states[1]] == 0:  # if local state is unmarked.
+            a = self.greedy_select(self.qvalues[i][states[0]][states[1]])
 
         elif self.joint_marks:  # if safe
-            a = self.greedy_select(self.qvalues[i][state[0]][state[1]])
+            a = self.greedy_select(self.qvalues[i][states[0]][states[1]])
 
         else:  # select from joint qvalues.
             a = self.greedy_select(self.joint_qvalues[i][state[0]][state[1]])
@@ -75,7 +143,7 @@ class CQLearning:
     def update(self, i, state, rewards):
         # TODO:analyze rewards with t-test and determine if dangerous.
         joint_state = 0  # TODO: fix this
-        if self.is_dangerous(rewards, self.observed_rewards[state[0]][state[1]][i]):
+        if self.is_dangerous(rewards, self.W1[state[0]][state[1]][i]):
             # mark state. for agent a
             # TODO figure this out
             pass
@@ -91,7 +159,7 @@ class CQLearning:
     def is_dangerous(self, reward, expected_rew):
         # TODO : take an action state combination +rewards and determine if state should e marked as dangerous
         t, p_val = ttest_ind(reward, expected_rew, equal_var=False)
-        if p_val < self.threshold:
+        if p_val < self.test_threshold:
             # reject hypothesis of equal means -> dangerous
             pass
         else:
@@ -113,8 +181,7 @@ class CQLearning:
 
             for s in range(step_max):
 
-                for a in range(self.nagents):  # action selection
-                    actions[a] = self.action_selection(pos[a], a)
+                self.action_selection(pos)  #TODO: fix
 
                 # update environment and retrieve rewards:
                 obs, rew, _, done = self.env.step(actions)
@@ -125,5 +192,11 @@ class CQLearning:
 
 
 if __name__ == "__main__":
-    cq = CQLearning()
-    print('done')
+    cq = CQLearning(nagents=3)
+    print('done testing initialization')
+    cq.joint_marks = np.array([[[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]],
+                               [[2, 3, 5, 5, 7, 8, 2], [2, 4, 5, 6, 7, 7, 2], [3, 3, 5, 6, 7, 8, 2]],
+                               [[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]]])
+    r, ind = cq.retrieve_js(states=np.array([[2, 2], [5, 6], [6, 6]]), a=1)
+    print('Ind: ', ind)
+    print('Ret: ', r)

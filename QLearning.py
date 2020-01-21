@@ -39,7 +39,8 @@ class QLearning:
         for e in range(episode_max):
             env.reset()
             pos = deepcopy(env.pos[0])
-
+            if debug:
+                print('episode ', e + 1)
             for s in range(step_max):
 
                 if debug:
@@ -71,8 +72,7 @@ class QLearning:
 
                 if done:
                     if debug:
-                        env.render()
-                    print('episode ', e + 1, ' done')
+                        env.render(episode=e + 1)
                     break
 
             steps[e] = s
