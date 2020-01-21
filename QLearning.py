@@ -43,7 +43,7 @@ class QLearning:
             for s in range(step_max):
 
                 if debug:
-                    env.render()
+                    env.render(episode=e + 1)
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
                 if not testing:
@@ -72,7 +72,7 @@ class QLearning:
                 if done:
                     if debug:
                         env.render()
-                        print('episode ', e + 1, ' done')
+                    print('episode ', e + 1, ' done')
                     break
 
             steps[e] = s
@@ -84,8 +84,7 @@ class QLearning:
 
             if stop:
                 break
-        # print(steps + 1)
-
+        print(steps + 1)
         if save:
             return self.qvalues, hist
         else:
@@ -97,8 +96,9 @@ if __name__ == "__main__":
     singleQL = QLearning([env.nrows, env.ncols])
     env.render()
     # input('next')
-    qval, hist = singleQL.run(env, step_max=500, episode_max=100, discount=0.9, debug=False, save=True)
+    qval = singleQL.run(env, step_max=400, episode_max=100, discount=0.9, debug=False)
     # input('end')
-    print('----------------------------------------------------------------- \n end of training -----------------------------------------------------------------')
+    print(
+        '----------------------------------------------------------------- \n end of training -----------------------------------------------------------------')
     singleQL.run(env, step_max=400, episode_max=5, testing=True, debug=True)
     env.final_render()

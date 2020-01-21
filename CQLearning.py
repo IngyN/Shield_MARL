@@ -2,7 +2,7 @@ import numpy as np
 from QLearning import QLearning
 from copy import deepcopy
 from gym_grid.envs import GridEnv
-# from scipy.stats import ttest_ind, ttest_ind_from_stats
+from scipy.stats import ttest_ind, ttest_ind_from_stats
 import random
 
 
@@ -44,8 +44,8 @@ class CQLearning:
         singleQL = QLearning([single_env.nrows, single_env.ncols])
 
         for a in range(self.nagents):
-            qval, hist = singleQL.run(single_env, step_max=400, episode_max=150, discount=0.9, debug=False, save=True,
-                                      N=self.nsaved)
+            qval, hist = singleQL.run(single_env, step_max=400, episode_max=150, discount=0.9,
+                                      debug=False, save=True, N=self.nsaved)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
 
