@@ -105,7 +105,7 @@ class CQLearning:
                     else:
                         if ret[j][-1] > 0:
                             self.joint_marks[i][indices[j]][-1] -= 1
-                            if self.joint_marks[i][indices[j]][-1] < 0:
+                            if self.joint_marks[i][indices[j]][-1] < self.conf_threshold:
                                 # TODO: remove from joint Qvalues
                                 pass
                 if not found:
@@ -116,21 +116,37 @@ class CQLearning:
 
         return a
 
-    def update(self, i, state, rewards):
+    def update(self, states, obs, rewards, actions):
         # TODO:analyze rewards with t-test and determine if dangerous.
-        joint_state = 0  # TODO: fix this
-        if self.is_dangerous(rewards, self.W1[state[0]][state[1]][i]):
-            # mark state. for agent a
-            # TODO figure this out
-            pass
+        joint_state = states  # TODO: fix this
 
-        elif self.marks[i][state[0]][state[1]] == 0 or self.joint_marks[joint_state] == 1:
-            # do nothing
-            pass
+        for i in range(self.nagents):
+            if self.is_dangerous(self.W2[i][states[i][0]][states[i][1]][actions[i]][:-1],
+                                 self.W1[i][i][states[i][0]][states[i][1]][actions[i]][:-1]):
+                # mark state. for agent a
+                # TODO figure this out
+                pass
 
-        else:
-            # update joint qvalues
-            self.joint_qvalues = 0  # TODO: update correctly
+            elif self.marks[i][state[0]][state[1]] == 0 or self.joint_marks[joint_state] == 1:
+                # do nothing
+                pass
+
+            else:
+                # update joint qvalues
+                self.joint_qvalues = 0  # TODO: update correctly
+
+    def is_dangerous(self, rk, rewards, expected_rew):
+        # TODO : take an action state combination +rewards and determine if state should e marked as dangerous
+        flag = False
+        t, p_val = ttest_ind(rewards, expected_rew, equal_var=False)  # TODO: make two sample t-test
+        if p_val < self.test_threshold:
+            # reject hypothesis of equal means -> dangerous
+            t, p_val = ttest_ind(rk, rewards, equal_var=False)  # single sample
+            if p_val < self.test_threshold:  # check if rk < mean of W2
+                # tODO: add to js and update marks.
+                flag = True
+
+        return flag
 
     def update_W(self, pos, actions, rew):
 
@@ -158,16 +174,6 @@ class CQLearning:
                 self.W2[i][pos[0]][pos[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
 
 
-    def is_dangerous(self, reward, expected_rew):
-        # TODO : take an action state combination +rewards and determine if state should e marked as dangerous
-        t, p_val = ttest_ind(reward, expected_rew, equal_var=False)
-        if p_val < self.test_threshold:
-            # reject hypothesis of equal means -> dangerous
-            pass
-        else:
-            # cannot reject -> dangerous
-            pass
-
     def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False):
 
         alpha_index = 1
@@ -175,23 +181,30 @@ class CQLearning:
         # print(pos)
         steps = np.zeros([episode_max], dtype=int)
         actions = np.zeros([self.nagents], dtype=int)
-        stop = False
 
         for e in range(episode_max):
             self.env.reset()
+
             pos = self.env.pos
 
             for s in range(step_max):
 
+                self.alpha = alpha_index / (0.1 * s + 0.5)
+
                 for a in range(self.nagents):
-                    actions[a] = self.action_selection(pos, a)
+                    actions[a] = self.action_selection(pos, a)  # select actions for each agent
 
                 # update environment and retrieve rewards:
-                obs, rew, _, done = self.env.step(actions)
-                self.update_W(pos, actions, rew)
-                for a in range(self.nagents):
-                    self.update(a, obs[a], rew[a])  # update marks and qvalues
+                obs, rew, _, done = self.env.step(actions)  # sample rewards and new states
+                self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudocode.
 
+                self.update(pos, obs, rew, actions)  # update marks and qvalues
+
+                pos = deepcopy(obs[0])
+
+                if done:
+                    steps[e] = s
+                    break
 
 if __name__ == "__main__":
     cq = CQLearning(nagents=3)
