@@ -105,38 +105,14 @@ class CQLearning:
                     else:
                         if ret[j][-1] > 0:
                             self.joint_marks[i][indices[j]][-1] -= 1
-                            # TODO: check for lowest conf and remove from joint_Qvalues
-
+                            if self.joint_marks[i][indices[j]][-1] < 0:
+                                # TODO: remove from joint Qvalues
+                                pass
                 if not found:
                     a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]])
 
         else:  # unmarked or safe
             a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]])
-
-        return a
-
-    def action_selection_all(self, states):
-        # TODO : select action based on marked and previous Q-values
-        all_safe = True
-        actions = np.zeros([self.nagents], dtype=int)
-
-        for i in range(self.nagents):
-            if self.marks[i][states[i][0]][states[i][1]] == 2:
-                all_safe = False
-                break
-
-        if all_safe:
-            for a in range(self.nagents):
-                actions[a] = self.greedy_select(self.qvalues[a][states[a][0]][states[a][1]])  # TODO: decreasing epsilon
-
-        if self.marks[i][states[0]][states[1]] == 0:  # if local state is unmarked.
-            a = self.greedy_select(self.qvalues[i][states[0]][states[1]])
-
-        elif self.joint_marks:  # if safe
-            a = self.greedy_select(self.qvalues[i][states[0]][states[1]])
-
-        else:  # select from joint qvalues.
-            a = self.greedy_select(self.joint_qvalues[i][state[0]][state[1]])
 
         return a
 
@@ -155,6 +131,32 @@ class CQLearning:
         else:
             # update joint qvalues
             self.joint_qvalues = 0  # TODO: update correctly
+
+    def update_W(self, pos, actions, rew):
+
+        for i in range(self.nagents):
+
+            index = self.W1[i][pos[0]][pos[1]][actions[i]][-1]
+            index2 = self.W2[i][pos[0]][pos[1]][actions[i]][-1]
+            nextval = self.W1[pos[0]][pos[1]][actions[i]][int(index)]
+
+            if np.isnan(index):  # check if never updated
+                index = 0
+                self.W1[pos[0]][pos[1]][actions[i]][int(index)] = rew[i]
+                self.W1[i][pos[0]][pos[1]][actions[i]][-1] = (index + 1) % self.nsaved
+
+            elif np.isnan(nextval):  # check if there are still spaces left
+                self.W1[pos[0]][pos[1]][actions[i]][int(index)] = rew[i]
+                self.W1[i][pos[0]][pos[1]][actions[i]][-1] = (index + 1) % self.nsaved
+
+            elif np.isnan(index2):  # add to W2
+                index2 = 0
+                self.W2[pos[0]][pos[1]][actions[i]][int(index2)] = rew[i]
+                self.W2[i][pos[0]][pos[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
+            else:
+                self.W2[pos[0]][pos[1]][actions[i]][int(index2)] = rew[i]
+                self.W2[i][pos[0]][pos[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
+
 
     def is_dangerous(self, reward, expected_rew):
         # TODO : take an action state combination +rewards and determine if state should e marked as dangerous
@@ -181,13 +183,13 @@ class CQLearning:
 
             for s in range(step_max):
 
-                self.action_selection(pos)  #TODO: fix
+                for a in range(self.nagents):
+                    actions[a] = self.action_selection(pos, a)
 
                 # update environment and retrieve rewards:
                 obs, rew, _, done = self.env.step(actions)
-
+                self.update_W(pos, actions, rew)
                 for a in range(self.nagents):
-                    state = obs[a]
                     self.update(a, obs[a], rew[a])  # update marks and qvalues
 
 
