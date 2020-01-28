@@ -81,12 +81,13 @@ class CQLearning:
 
     def action_selection(self, states, i):
         a = 0
+        print(states)
         if self.marks[i][states[i][0]][states[i][1]] == 2:  # unsafe
             ret, indices = self.retrieve_js(states, i)
             if len(indices) == 0:  # no matching marks for joint states.
                 a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]])
                 self.marks[i][states[i][0]][states[i][1]] = 0  # unmark since it wasnt found -> removed somewhere else
-            else:  # check if state infor for the others is the same
+            else:  # check if state in for for the others is the same
                 same = np.ones([ret.shape[0], self.nagents], dtype=int) * -1
                 same[:, i] = 1
                 for row, index in enumerate(ret):
@@ -123,7 +124,7 @@ class CQLearning:
 
         for i in range(self.nagents):
             if self.is_dangerous(rewards[i], self.W2[i][states[i][0]][states[i][1]][actions[i]][:-1],
-                                 self.W1[i][i][states[i][0]][states[i][1]][actions[i]][:-1]):
+                                 self.W1[i][states[i][0]][states[i][1]][actions[i]][:-1]):
                 #  Mark both joint and local state + update index.
                 self.marks[i][states[i][0]][states[i][1]] = 2
                 temp = np.append(states.flatten(), self.start_conf)
@@ -177,23 +178,25 @@ class CQLearning:
             p = pos[i]
             index = self.W1[i][p[0]][p[1]][actions[i]][-1]
             index2 = self.W2[i][p[0]][p[1]][actions[i]][-1]
-            nextval = self.W1[p[0]][p[1]][actions[i]][int(index)]
+            if np.isnan(index):
+                index = 0
+            nextval = self.W1[i][p[0]][p[1]][actions[i]][int(index)]
 
             if np.isnan(index):  # check if never updated
                 index = 0
-                self.W1[p[0]][p[1]][actions[i]][int(index)] = rew[i]
+                self.W1[i][p[0]][p[1]][actions[i]][int(index)] = rew[i]
                 self.W1[i][p[0]][p[1]][actions[i]][-1] = (index + 1) % self.nsaved
 
             elif np.isnan(nextval):  # check if there are still spaces left
-                self.W1[p[0]][p[1]][actions[i]][int(index)] = rew[i]
+                self.W1[i][p[0]][p[1]][actions[i]][int(index)] = rew[i]
                 self.W1[i][p[0]][p[1]][actions[i]][-1] = (index + 1) % self.nsaved
 
             elif np.isnan(index2):  # add to W2
                 index2 = 0
-                self.W2[p[0]][p[1]][actions[i]][int(index2)] = rew[i]
+                self.W2[i][p[0]][p[1]][actions[i]][int(index2)] = rew[i]
                 self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
             else:
-                self.W2[p[0]][p[1]][actions[i]][int(index2)] = rew[i]
+                self.W2[i][p[0]][p[1]][actions[i]][int(index2)] = rew[i]
                 self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
 
 
@@ -208,15 +211,13 @@ class CQLearning:
         for e in range(episode_max):
             self.env.reset()
 
-            pos = deepcopy(self.env.pos)
-
             if debug:
                 print('episode : ', e + 1)
 
             for s in range(step_max):
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
-
+                pos = deepcopy(self.env.pos)
                 if debug:
                     self.env.render(episode=e + 1)
 
@@ -229,7 +230,7 @@ class CQLearning:
 
                 self.update(pos, obs, rew, actions)  # update marks and qvalues
 
-                pos = deepcopy(obs[0])
+                # pos = deepcopy(obs)
 
                 if done:
                     steps[e] = s
