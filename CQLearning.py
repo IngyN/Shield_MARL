@@ -7,11 +7,11 @@ import random
 
 
 class CQLearning:
-    def __init__(self, map_name='example', nagents=2, nactions=5):
+    def __init__(self, map_name='example', nagents=2, nactions=5, norender=False):
         self.nagents = nagents
         self.nactions = nactions
         self.map_name = map_name
-        self.env = GridEnv(agents=nagents, map_name=map_name)  # set up ma environment
+        self.env = GridEnv(agents=nagents, map_name=map_name, norender=False)  # set up ma environment
 
         # individual/local info
         self.qvalues = np.zeros([nagents, self.env.nrows, self.env.ncols, nactions])
