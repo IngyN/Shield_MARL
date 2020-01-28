@@ -76,7 +76,7 @@ class QLearning:
                     break
 
             steps[e] = s
-            if e > 200:
+            if e > 80:
                 stop = True
                 for stop_step in range(80):
                     if steps[e] != steps[e - stop_step]:

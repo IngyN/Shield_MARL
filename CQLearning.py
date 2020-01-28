@@ -51,7 +51,7 @@ class CQLearning:
         singleQL = QLearning([single_env.nrows, single_env.ncols])
 
         for a in range(self.nagents):
-            qval, hist = singleQL.run(single_env, step_max=400, episode_max=150, discount=0.9,
+            qval, hist = singleQL.run(single_env, step_max=100, episode_max=100, discount=0.9,
                                       debug=False, save=True, N=self.nsaved)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
@@ -174,27 +174,27 @@ class CQLearning:
     def update_W(self, pos, actions, rew):
 
         for i in range(self.nagents):
-
-            index = self.W1[i][pos[0]][pos[1]][actions[i]][-1]
-            index2 = self.W2[i][pos[0]][pos[1]][actions[i]][-1]
-            nextval = self.W1[pos[0]][pos[1]][actions[i]][int(index)]
+            p = pos[i]
+            index = self.W1[i][p[0]][p[1]][actions[i]][-1]
+            index2 = self.W2[i][p[0]][p[1]][actions[i]][-1]
+            nextval = self.W1[p[0]][p[1]][actions[i]][int(index)]
 
             if np.isnan(index):  # check if never updated
                 index = 0
-                self.W1[pos[0]][pos[1]][actions[i]][int(index)] = rew[i]
-                self.W1[i][pos[0]][pos[1]][actions[i]][-1] = (index + 1) % self.nsaved
+                self.W1[p[0]][p[1]][actions[i]][int(index)] = rew[i]
+                self.W1[i][p[0]][p[1]][actions[i]][-1] = (index + 1) % self.nsaved
 
             elif np.isnan(nextval):  # check if there are still spaces left
-                self.W1[pos[0]][pos[1]][actions[i]][int(index)] = rew[i]
-                self.W1[i][pos[0]][pos[1]][actions[i]][-1] = (index + 1) % self.nsaved
+                self.W1[p[0]][p[1]][actions[i]][int(index)] = rew[i]
+                self.W1[i][p[0]][p[1]][actions[i]][-1] = (index + 1) % self.nsaved
 
             elif np.isnan(index2):  # add to W2
                 index2 = 0
-                self.W2[pos[0]][pos[1]][actions[i]][int(index2)] = rew[i]
-                self.W2[i][pos[0]][pos[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
+                self.W2[p[0]][p[1]][actions[i]][int(index2)] = rew[i]
+                self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
             else:
-                self.W2[pos[0]][pos[1]][actions[i]][int(index2)] = rew[i]
-                self.W2[i][pos[0]][pos[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
+                self.W2[p[0]][p[1]][actions[i]][int(index2)] = rew[i]
+                self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
 
 
     def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False):
@@ -243,4 +243,4 @@ if __name__ == "__main__":
     cq = CQLearning()
     cq.initialize_qvalues()
 
-    cq.run()
+    cq.run(step_max=100, episode_max=2, debug=True)
