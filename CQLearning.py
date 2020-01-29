@@ -3,7 +3,7 @@ from QLearning import QLearning
 from copy import deepcopy
 from gym_grid.envs import GridEnv
 from scipy.stats import ttest_ind, ttest_1samp
-import random
+import random, time
 
 
 class CQLearning:
@@ -81,7 +81,7 @@ class CQLearning:
 
     def action_selection(self, states, i):
         a = 0
-        print(states)
+        # print(states)
         if self.marks[i][states[i][0]][states[i][1]] == 2:  # unsafe
             ret, indices = self.retrieve_js(states, i)
             if len(indices) == 0:  # no matching marks for joint states.
@@ -220,6 +220,7 @@ class CQLearning:
                 pos = deepcopy(self.env.pos)
                 if debug:
                     self.env.render(episode=e + 1)
+                    time.sleep(0.1)
 
                 for a in range(self.nagents):
                     actions[a] = self.action_selection(pos, a)  # select actions for each agent
@@ -230,6 +231,9 @@ class CQLearning:
 
                 self.update(pos, obs, rew, actions)  # update marks and qvalues
 
+                if debug:  # and s > step_max*0.6:
+                    print('action:', actions, '- done:', done, '\t- goal_flag:', self.env.goal_flag, '- rewards:', rew,
+                          '\t- pos:', pos.flatten(), '- obs:', obs.flatten())
                 # pos = deepcopy(obs)
 
                 if done:
