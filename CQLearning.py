@@ -12,6 +12,8 @@ class CQLearning:
         self.nactions = nactions
         self.map_name = map_name
         self.env = GridEnv(agents=nagents, map_name=map_name, norender=False)  # set up ma environment
+        self.targets = self.env.targets
+        self.start = self.env.start_pos
 
         # individual/local info
         self.qvalues = np.zeros([nagents, self.env.nrows, self.env.ncols, nactions])
@@ -51,6 +53,8 @@ class CQLearning:
         singleQL = QLearning([single_env.nrows, single_env.ncols])
 
         for a in range(self.nagents):
+            single_env.set_start = self.start[a]
+            single_env.set_targets = self.targets[a]
             qval, hist = singleQL.run(single_env, step_max=100, episode_max=100, discount=0.9,
                                       debug=False, save=True, N=self.nsaved)
             self.qvalues[a] = deepcopy(qval)
