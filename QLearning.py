@@ -10,7 +10,7 @@ class QLearning:
         self.qvalues = np.zeros([map_size[0], map_size[1], nactions])
         self.nactions = nactions
 
-    def action_selection(self, qval, epsilon=0.7):
+    def action_selection(self, qval, epsilon=0.8):
         flag = random.random()
         if flag >= epsilon:
             # choose from qvalues
@@ -26,7 +26,11 @@ class QLearning:
         o_value = (1 - self.alpha) * self.qvalues[pos[0]][pos[1]][action]
         self.qvalues[pos[0]][pos[1]][action] = self.alpha * (reward + self.discount * m_value) + o_value
 
-    def run(self, env, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, save=False, N=10):
+    def reset(self):
+        self.qvalues = np.zeros([self.qvalues.shape[0], self.qvalues.shape[1], self.nactions])
+
+    def run(self, env, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, save=False, N=10,
+            epsilon=0.8):
 
         alpha_index = 1
         self.discount = discount
@@ -48,7 +52,7 @@ class QLearning:
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
                 if not testing:
-                    action = self.action_selection(self.qvalues[pos[0]][pos[1]])
+                    action = self.action_selection(self.qvalues[pos[0]][pos[1]], epsilon=epsilon)
                 else:
                     action = self.action_selection(self.qvalues[pos[0]][pos[1]], epsilon=0)
                 obs, rew, _, done = env.step([action])

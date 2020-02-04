@@ -36,7 +36,7 @@ class CQLearning:
         self.joint_qvalues = np.zeros(dims)
 
         # t-test vars
-        self.test_threshold = 0.05  # 5%
+        self.test_threshold = 0.2  # 5%
         self.conf_threshold = 1
         self.conf_max = 50
         self.start_conf = 10
@@ -53,9 +53,11 @@ class CQLearning:
         singleQL = QLearning([single_env.nrows, single_env.ncols])
 
         for a in range(self.nagents):
-            single_env.set_start = self.start[a]
-            single_env.set_targets = self.targets[a]
-            qval, hist = singleQL.run(single_env, step_max=100, episode_max=100, discount=0.9,
+            singleQL.reset()
+            single_env.set_start(self.start[a])
+            single_env.set_targets(self.targets[a])
+            # print('i:', a,'start :', self.start[a], ' - target: ', self.targets[a])
+            qval, hist = singleQL.run(single_env, step_max=200, episode_max=400, discount=0.9,
                                       debug=False, save=True, N=self.nsaved)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
@@ -127,6 +129,7 @@ class CQLearning:
         joint_state = states.flatten()
 
         for i in range(self.nagents):
+            print('----- agent :', i)
             if self.is_dangerous(rewards[i], self.W2[i][states[i][0]][states[i][1]][actions[i]][:-1],
                                  self.W1[i][states[i][0]][states[i][1]][actions[i]][:-1]):
                 #  Mark both joint and local state + update index.
@@ -149,14 +152,19 @@ class CQLearning:
                 o_value = (1 - self.alpha) * self.joint_qvalues[i][self.mark_index].item(tuple(index_joint))
                 self.joint_qvalues[i][self.mark_index].itemset(tuple(index_joint), o_value + m_value)
 
-    def is_dangerous(self, rk, rewards, expected_rew):
+    def is_dangerous(self, rk, rewards, expected_rew, debug=True):
         #  take an action state combination +rewards and determine if state should e marked as dangerous
         flag = False
-        t, p_val = ttest_ind(rewards, expected_rew, equal_var=False)  # two  independent sample t-test
+        # TODO add check for if the rewards and expecteds are the same -> nan
+        t, p_val = ttest_ind(rewards, expected_rew, equal_var=True, nan_policy='omit')  # two  independent sample t-test
+        if debug:
+            print('test 1: r', rewards, ' e_r:', expected_rew, ' p_val:', p_val, ' t:', t)
         if p_val < self.test_threshold:
             # reject hypothesis of equal means -> dangerous
             t, p_val = ttest_1samp(rk, np.mean(rewards))  # single sample
             if p_val < self.test_threshold:  # check if rk < mean of W2
+                if debug:
+                    print('test 2: r', rk, ' e_r:', rewards, ' p_val:', p_val, ' t:', t)
                 flag = True
         return flag
 
@@ -238,6 +246,7 @@ class CQLearning:
                 if debug:  # and s > step_max*0.6:
                     print('action:', actions, '- done:', done, '\t- goal_flag:', self.env.goal_flag, '- rewards:', rew,
                           '\t- pos:', pos.flatten(), '- obs:', obs.flatten())
+                    # print('js :', self.joint_marks[0])
                 # pos = deepcopy(obs)
 
                 if done:
@@ -249,7 +258,7 @@ class CQLearning:
         return steps, self.joint_qvalues, self.qvalues
 
 if __name__ == "__main__":
-    cq = CQLearning()
+    cq = CQLearning(map_name='ISR')
     cq.initialize_qvalues()
 
-    cq.run(step_max=100, episode_max=2, debug=True)
+    cq.run(step_max=7, episode_max=1, debug=True)
