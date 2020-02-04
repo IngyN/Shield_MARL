@@ -26,7 +26,7 @@ class CQLearning:
         dims.append(1)
         self.joint_marks = np.zeros([self.nagents, self.dangerous_max, 2 * self.nagents + 1],
                                     dtype=int)  # joint state marks
-        self.mark_index = 0
+        self.mark_index = np.zeros([nagents], dtype=int)
 
         # i, row,col,.., row,col, confidence
         # TODO check dims are applied correctly.
@@ -37,6 +37,7 @@ class CQLearning:
 
         # t-test vars
         self.test_threshold = 0.2  # 5%
+        self.test_threshold2 = 0.2
         self.conf_threshold = 1
         self.conf_max = 50
         self.start_conf = 10
@@ -57,7 +58,7 @@ class CQLearning:
             single_env.set_start(self.start[a])
             single_env.set_targets(self.targets[a])
             # print('i:', a,'start :', self.start[a], ' - target: ', self.targets[a])
-            qval, hist = singleQL.run(single_env, step_max=200, episode_max=400, discount=0.9,
+            qval, hist = singleQL.run(single_env, step_max=250, episode_max=200, discount=0.9,
                                       debug=False, save=True, N=self.nsaved)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
@@ -96,21 +97,22 @@ class CQLearning:
             else:  # check if state in for for the others is the same
                 same = np.ones([ret.shape[0], self.nagents], dtype=int) * -1
                 same[:, i] = 1
-                for row, index in enumerate(ret):
+                for index, row in enumerate(ret):
                     for a in range(self.nagents):
                         if a != i:
                             if np.all(row[2 * a:2 * a + 2] == states[a]):
                                 same[index] = 1
                 found = False
-                for row, j in enumerate(same):
+                for j, row in enumerate(same):
                     if np.all(row == np.ones([self.nagents])):  # found one that matches. Should not have duplicates
                         found = True
                         if ret[j][-1] < self.conf_max:
                             self.joint_marks[i][indices[j]][-1] += 1
                             if self.joint_marks[i][indices[j]][-1] > self.conf_max:
                                 self.joint_marks[i][indices[j]][-1] = self.conf_max
-
-                        a = self.greedy_select(self.joint_qvalues[i][states[i][0]][states[i][1]])
+                        temp = np.append(i, ret[j][:-1])
+                        a = self.greedy_select(self.joint_qvalues.item(tuple(temp)))
+                        break
                     else:
                         if ret[j][-1] > 0:
                             self.joint_marks[i][indices[j]][-1] -= 1
@@ -129,47 +131,45 @@ class CQLearning:
         joint_state = states.flatten()
 
         for i in range(self.nagents):
-            print('----- agent :', i)
             if self.is_dangerous(rewards[i], self.W2[i][states[i][0]][states[i][1]][actions[i]][:-1],
                                  self.W1[i][states[i][0]][states[i][1]][actions[i]][:-1]):
                 #  Mark both joint and local state + update index.
                 self.marks[i][states[i][0]][states[i][1]] = 2
                 temp = np.append(states.flatten(), self.start_conf)
-                self.mark_index = self.find_next_index(i)
-                if self.mark_index != -1:
-                    self.joint_marks[i][self.mark_index] = temp
+                self.mark_index[i] = self.find_next_index(i)
+                if self.mark_index[i] != -1:
+                    self.joint_marks[i][self.mark_index[i]] = temp
 
             elif self.marks[i][states[i][0]][states[i][1]] == 0:
                 # if marked as safe -> do not update local # TODO: check if we should update here too.
                 pass
 
-            elif self.mark_index != -1 and np.all(self.joint_marks[i][self.mark_index][:-1] == joint_state):
+            elif self.mark_index[i] != -1 and np.all(self.joint_marks[i][self.mark_index[i]][:-1] == joint_state):
                 # update joint qvalues
                 index_joint = np.append(joint_state, actions[i])
                 # new val using new states
                 m_value = self.alpha * (rewards[i] + self.discount * max(self.qvalues[i][obs[i][0]][obs[i][1]]))
                 # old val
-                o_value = (1 - self.alpha) * self.joint_qvalues[i][self.mark_index].item(tuple(index_joint))
-                self.joint_qvalues[i][self.mark_index].itemset(tuple(index_joint), o_value + m_value)
+                o_value = (1 - self.alpha) * self.joint_qvalues[i][self.mark_index[i]].item(tuple(index_joint))
+                self.joint_qvalues[i][self.mark_index[i]].itemset(tuple(index_joint), o_value + m_value)
 
     def is_dangerous(self, rk, rewards, expected_rew, debug=True):
         #  take an action state combination +rewards and determine if state should e marked as dangerous
         flag = False
-        # TODO add check for if the rewards and expecteds are the same -> nan
         t, p_val = ttest_ind(rewards, expected_rew, equal_var=True, nan_policy='omit')  # two  independent sample t-test
-        if debug:
-            print('test 1: r', rewards, ' e_r:', expected_rew, ' p_val:', p_val, ' t:', t)
+        # if debug:
+        #     print('test 1: r', rewards, ' e_r:', expected_rew, ' p_val:', p_val, ' t:', t)
         if p_val < self.test_threshold:
             # reject hypothesis of equal means -> dangerous
-            t, p_val = ttest_1samp(rk, np.mean(rewards))  # single sample
-            if p_val < self.test_threshold:  # check if rk < mean of W2
-                if debug:
-                    print('test 2: r', rk, ' e_r:', rewards, ' p_val:', p_val, ' t:', t)
+            t, p_val = ttest_1samp(rewards, rk)  # single sample
+            if debug:
+                print('test 2: rk', rk, ' rew:', rewards, ' p_val:', p_val, ' t:', t)
+            if p_val < self.test_threshold2:  # check if rk < mean of W2
                 flag = True
         return flag
 
     def find_next_index(self, i):  # find next available index for mark
-        next = self.mark_index
+        next = int(self.mark_index[i])
         if next == -1:
             next = 0
         start = next
@@ -261,4 +261,4 @@ if __name__ == "__main__":
     cq = CQLearning(map_name='ISR')
     cq.initialize_qvalues()
 
-    cq.run(step_max=7, episode_max=1, debug=True)
+    cq.run(step_max=20, episode_max=3, debug=True)

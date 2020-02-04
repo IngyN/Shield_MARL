@@ -8,6 +8,7 @@ from gym_grid.envs import GridEnv
 class QLearning:
     def __init__(self, map_size, nactions=5):
         self.qvalues = np.zeros([map_size[0], map_size[1], nactions])
+        self.map_dim = map_size
         self.nactions = nactions
 
     def action_selection(self, qval, epsilon=0.8):
@@ -27,10 +28,9 @@ class QLearning:
         self.qvalues[pos[0]][pos[1]][action] = self.alpha * (reward + self.discount * m_value) + o_value
 
     def reset(self):
-        self.qvalues = np.zeros([self.qvalues.shape[0], self.qvalues.shape[1], self.nactions])
+        self.qvalues = np.zeros([self.map_dim[0], self.map_dim[1], self.nactions])
 
-    def run(self, env, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, save=False, N=10,
-            epsilon=0.8):
+    def run(self, env, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, save=False, N=10):
 
         alpha_index = 1
         self.discount = discount
@@ -52,7 +52,7 @@ class QLearning:
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
                 if not testing:
-                    action = self.action_selection(self.qvalues[pos[0]][pos[1]], epsilon=epsilon)
+                    action = self.action_selection(self.qvalues[pos[0]][pos[1]])
                 else:
                     action = self.action_selection(self.qvalues[pos[0]][pos[1]], epsilon=0)
                 obs, rew, _, done = env.step([action])
