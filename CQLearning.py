@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 class CQLearning:
-    def __init__(self, map_name='example', nagents=2, nactions=5, norender=False):
+    def __init__(self, map_name='example', nagents=2, nactions=5):
         self.nagents = nagents
         self.nactions = nactions
         self.map_name = map_name
@@ -17,6 +17,7 @@ class CQLearning:
         self.targets = self.env.targets
         self.start = self.env.start_pos
         self.alpha = 1
+        self.discount = 0.9
 
         # individual/local info
         self.qvalues = np.zeros([nagents, self.env.nrows, self.env.ncols, nactions])
@@ -32,7 +33,6 @@ class CQLearning:
         self.mark_index = np.zeros([nagents], dtype=int)
 
         # i, row,col,.., row,col, confidence
-        # TODO check dims are applied correctly.
         dims = [nagents, self.dangerous_max]
         dims.extend([self.env.nrows, self.env.ncols] * nagents)
         dims.append(self.nactions)
@@ -46,12 +46,13 @@ class CQLearning:
         self.start_conf = 10
         self.nsaved = 5  # history for observed/expected rewards
 
+        # Rewards History
         self.W1 = np.ones([nagents, self.env.nrows, self.env.ncols, nactions,
                            self.nsaved + 1]) * np.nan  # nan vals were not initialized
+        self.W2 = np.ones([nagents, self.env.nrows, self.env.ncols, nactions,
+                           self.nsaved + 1]) * np.nan  # nan vals were not initialized
 
-    def state_to_index(self, i, j):
-        return j + i * self.env.ncols
-
+    # Initialize the local q-values using Q-learning for each agent as well as rewards history W1.
     def initialize_qvalues(self):
         single_env = GridEnv(agents=1, map_name=self.map_name)
         singleQL = QLearning([single_env.nrows, single_env.ncols])
@@ -68,6 +69,7 @@ class CQLearning:
 
         self.W2 = deepcopy(self.W1)
 
+    # Greedy select based on a randomness value epsilon
     def greedy_select(self, qval, epsilon=0.4):
         flag = random.random()
         if flag >= epsilon:
@@ -76,6 +78,7 @@ class CQLearning:
             action = random.randint(0, self.nactions - 1)  # choose from random
         return action
 
+    # Retrieve the joint states that contain the current state for agent a
     def retrieve_js(self, states, a):
         ret = np.ones([1, 2 * self.nagents + 1], dtype=int) * -1
         ind = []
@@ -89,6 +92,7 @@ class CQLearning:
                     ind.append(i)
         return ret, ind
 
+    # Select an action based on marks and current state for one agent i
     def action_selection(self, states, i, epsilon=0.4):
         a = 0
         # print(states)
@@ -131,8 +135,8 @@ class CQLearning:
 
         return a
 
+    # Retrieve the joint Q-values for current joint state
     def get_qval(self, i, ind, js):
-
         qval = self.joint_qvalues[i]
         qval = qval[ind]
 
@@ -141,6 +145,7 @@ class CQLearning:
 
         return qval
 
+    # Update Q-values and marks based on the taken actions and received rewards
     def update(self, states, obs, rewards, actions):  # TODO: test.
         joint_state = states.flatten()
 
@@ -148,7 +153,7 @@ class CQLearning:
             if self.env.goal_flag[i]:
                 pass
             elif self.is_dangerous(rewards[i], self.W2[i][states[i][0]][states[i][1]][actions[i]][:-1],
-                                 self.W1[i][states[i][0]][states[i][1]][actions[i]][:-1]):
+                                   self.W1[i][states[i][0]][states[i][1]][actions[i]][:-1]):
                 #  Mark both joint and local state + update index.
                 self.marks[i][states[i][0]][states[i][1]] = 2
                 temp = np.append(states.flatten(), self.start_conf)
@@ -169,6 +174,7 @@ class CQLearning:
                 o_value = (1 - self.alpha) * self.joint_qvalues[i][self.mark_index[i]].item(tuple(index_joint))
                 self.joint_qvalues[i][self.mark_index[i]].itemset(tuple(index_joint), o_value + m_value)
 
+    # check if statistical tests detect current state as dangerous.
     def is_dangerous(self, rk, rewards, expected_rew, debug=False):
         #  take an action state combination +rewards and determine if state should e marked as dangerous
         flag = False
@@ -184,6 +190,7 @@ class CQLearning:
                 flag = True
         return flag
 
+    # find the next index to mark in joint_marks -> js in pseudo-code
     def find_next_index(self, i):  # find next available index for mark
         next = int(self.mark_index[i])
         if next == -1:
@@ -192,7 +199,7 @@ class CQLearning:
         first = True
         # either a mark with confidence = 0
         while self.joint_marks[i][next][-1] != 0:
-            if (not first and start == next):  # if we looped over everything
+            if not first and start == next:  # if we looped over everything
                 next = -1
                 break
             first = False
@@ -200,6 +207,7 @@ class CQLearning:
 
         return next
 
+    # updated the observed rewards for W1 and W2
     def update_W(self, pos, actions, rew):
 
         for i in range(self.nagents):
@@ -220,7 +228,7 @@ class CQLearning:
                 self.W2[i][p[0]][p[1]][actions[i]][int(index2)] = rew[i]
                 self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
 
-
+    # non shielded running of the algorithm
     def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False):
 
         alpha_index = 1
@@ -230,56 +238,67 @@ class CQLearning:
         steps = np.zeros([episode_max], dtype=int)
         actions = np.zeros([self.nagents], dtype=int)
 
-        for e in range(episode_max):
+        for e in range(episode_max):  # loop over episodes
             self.env.reset()
             done = False
 
             if debug:
                 print('episode : ', e + 1)
 
-            for s in range(step_max):
+            for s in range(step_max):  # loop over steps
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
-                ep = 1 / (0.6 * e + 3)
-                pos = deepcopy(self.env.pos)
-                if debug:
-                    self.env.render(episode=e + 1)
+                ep = 1 / (0.6 * e + 3) + 0.1
+                pos = deepcopy(self.env.pos)  # update pos based in the environment
 
-                for a in range(self.nagents):
+                if debug:
+                    self.env.render(episode=e + 1, speed=1)
+
+                for a in range(self.nagents):  # greedy select an action
                     if not testing:
                         actions[a] = self.action_selection(pos, a, epsilon=ep)  # select actions for each agent
                     else:
                         actions[a] = self.action_selection(pos, a, epsilon=0)
+
                 # update environment and retrieve rewards:
                 obs, rew, _, done = self.env.step(actions)  # sample rewards and new states
-                self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudocode.
+                self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudo-code.
 
                 self.update(pos, obs, rew, actions)  # update marks and qvalues
 
                 # if debug:  # and s > step_max*0.6:
-                #     print('action:', actions, '- done:', done, '\t- goal_flag:', self.env.goal_flag, '- rewards:', rew,
+                #     print('action:',actions,'- done:', done, '\t- goal_flag:', self.env.goal_flag, '- rewards:', rew,
                 #           '\t- pos:', pos.flatten(), '- obs:', obs.flatten())
 
-                if done:
+                if done:  # if all agents have reached their goal -> episode is finished
                     steps[e] = s
                     if debug:
-                        self.env.render(episode=e + 1)
+                        self.env.render(episode=e + 1, speed=1)
                     break
 
-            if not done:
+            if not done:  # if episode terminated without agents reaching their goals
                 steps[e] = step_max
 
         return steps, self.joint_qvalues, self.qvalues
+
 
 if __name__ == "__main__":
     cq = CQLearning(map_name='ISR')
     cq.initialize_qvalues()
 
-    s, _, _ = cq.run(step_max=150, episode_max=100, debug=True)
-    print(s)
+    s, _, _ = cq.run(step_max=150, episode_max=100, debug=False)
+    print('steps train: \n', s)
+
+    s2, _, _ = cq.run(step_max=50, episode_max=10, testing=True, debug=True)
+    print('steps test: \n', s2)
 
     plt.ioff()
     fig = plt.figure(2)
     plt.plot(np.arange(1, 101), s)
     fig.savefig('test.png', bbox_inches='tight')
+    plt.title('Training steps')
+
+    fig = plt.figure(3)
+    plt.plot(np.arange(1, 11), s2)
+    plt.title('Testing steps')
     plt.show()
