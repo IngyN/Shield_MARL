@@ -4,6 +4,8 @@ from copy import deepcopy
 from gym_grid.envs import GridEnv
 from scipy.stats import ttest_ind, ttest_1samp
 import random, time
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 class CQLearning:
@@ -86,13 +88,13 @@ class CQLearning:
                     ind.append(i)
         return ret, ind
 
-    def action_selection(self, states, i):
+    def action_selection(self, states, i, epsilon=0.4):
         a = 0
         # print(states)
         if self.marks[i][states[i][0]][states[i][1]] == 2:  # unsafe
             ret, indices = self.retrieve_js(states, i)
             if len(indices) == 0:  # no matching marks for joint states.
-                a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]])
+                a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]], epsilon=epsilon)
                 self.marks[i][states[i][0]][states[i][1]] = 0  # unmark since it wasnt found -> removed somewhere else
             else:  # check if state in for for the others is the same
                 same = np.ones([ret.shape[0], self.nagents], dtype=int) * -1
@@ -110,8 +112,9 @@ class CQLearning:
                             self.joint_marks[i][indices[j]][-1] += 1
                             if self.joint_marks[i][indices[j]][-1] > self.conf_max:
                                 self.joint_marks[i][indices[j]][-1] = self.conf_max
-                        temp = np.append(i, ret[j][:-1])
-                        a = self.greedy_select(self.joint_qvalues.item(tuple(temp)))
+
+                        temp = self.get_qval(i, indices[j], ret[j][:-1])
+                        a = self.greedy_select(temp, epsilon=epsilon)
                         break
                     else:
                         if ret[j][-1] > 0:
@@ -120,18 +123,30 @@ class CQLearning:
                                 self.joint_marks[i][indices[j]][-1] = 0  # will be overwritten
 
                 if not found:
-                    a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]])
+                    a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]], epsilon=epsilon)
 
         else:  # unmarked or safe
-            a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]])
+            a = self.greedy_select(self.qvalues[i][states[i][0]][states[i][1]], epsilon=epsilon)
 
         return a
+
+    def get_qval(self, i, ind, js):
+
+        qval = self.joint_qvalues[i]
+        qval = qval[ind]
+
+        for e in js:
+            qval = qval[e]
+
+        return qval
 
     def update(self, states, obs, rewards, actions):  # TODO: test.
         joint_state = states.flatten()
 
         for i in range(self.nagents):
-            if self.is_dangerous(rewards[i], self.W2[i][states[i][0]][states[i][1]][actions[i]][:-1],
+            if self.env.goal_flag[i]:
+                pass
+            elif self.is_dangerous(rewards[i], self.W2[i][states[i][0]][states[i][1]][actions[i]][:-1],
                                  self.W1[i][states[i][0]][states[i][1]][actions[i]][:-1]):
                 #  Mark both joint and local state + update index.
                 self.marks[i][states[i][0]][states[i][1]] = 2
@@ -153,12 +168,12 @@ class CQLearning:
                 o_value = (1 - self.alpha) * self.joint_qvalues[i][self.mark_index[i]].item(tuple(index_joint))
                 self.joint_qvalues[i][self.mark_index[i]].itemset(tuple(index_joint), o_value + m_value)
 
-    def is_dangerous(self, rk, rewards, expected_rew, debug=True):
+    def is_dangerous(self, rk, rewards, expected_rew, debug=False):
         #  take an action state combination +rewards and determine if state should e marked as dangerous
         flag = False
         t, p_val = ttest_ind(rewards, expected_rew, equal_var=True, nan_policy='omit')  # two  independent sample t-test
-        # if debug:
-        #     print('test 1: r', rewards, ' e_r:', expected_rew, ' p_val:', p_val, ' t:', t)
+        if debug:
+            print('test 1: r', rewards, ' e_r:', expected_rew, ' p_val:', p_val, ' t:', t)
         if p_val < self.test_threshold:
             # reject hypothesis of equal means -> dangerous
             t, p_val = ttest_1samp(rewards, rk)  # single sample
@@ -216,6 +231,7 @@ class CQLearning:
 
         alpha_index = 1
         self.discount = discount
+        ep = 0.4
         # print(pos)
         steps = np.zeros([episode_max], dtype=int)
         actions = np.zeros([self.nagents], dtype=int)
@@ -229,25 +245,25 @@ class CQLearning:
             for s in range(step_max):
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
+                ep = 1 / (0.6 * e + 3)
                 pos = deepcopy(self.env.pos)
                 if debug:
                     self.env.render(episode=e + 1)
-                    time.sleep(0.1)
 
                 for a in range(self.nagents):
-                    actions[a] = self.action_selection(pos, a)  # select actions for each agent
-
+                    if not testing:
+                        actions[a] = self.action_selection(pos, a, epsilon=ep)  # select actions for each agent
+                    else:
+                        actions[a] = self.action_selection(pos, a, epsilon=0)
                 # update environment and retrieve rewards:
                 obs, rew, _, done = self.env.step(actions)  # sample rewards and new states
                 self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudocode.
 
                 self.update(pos, obs, rew, actions)  # update marks and qvalues
 
-                if debug:  # and s > step_max*0.6:
-                    print('action:', actions, '- done:', done, '\t- goal_flag:', self.env.goal_flag, '- rewards:', rew,
-                          '\t- pos:', pos.flatten(), '- obs:', obs.flatten())
-                    # print('js :', self.joint_marks[0])
-                # pos = deepcopy(obs)
+                # if debug:  # and s > step_max*0.6:
+                #     print('action:', actions, '- done:', done, '\t- goal_flag:', self.env.goal_flag, '- rewards:', rew,
+                #           '\t- pos:', pos.flatten(), '- obs:', obs.flatten())
 
                 if done:
                     steps[e] = s
@@ -261,4 +277,10 @@ if __name__ == "__main__":
     cq = CQLearning(map_name='ISR')
     cq.initialize_qvalues()
 
-    cq.run(step_max=20, episode_max=3, debug=True)
+    s, _, _ = cq.run(step_max=150, episode_max=100, debug=True)
+    print(s)
+
+    fig = plt.figure(2)
+    plt.plot(np.arange(1, 101), s)
+    fig.savefig('test.png', bbox_inches='tight')
+    plt.show()
