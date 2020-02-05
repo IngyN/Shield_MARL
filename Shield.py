@@ -1,8 +1,11 @@
+import json
+
 class Shield:
-    def __init__(self):
+    def __init__(self, file='shields/'):
         # TODO : asdd reading the file for shield here.
         # find a more efficient way to load shield?
-
+        with open(file) as f:
+            d = json.load(f)
         pass
 
     def _find_start_state(self):

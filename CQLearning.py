@@ -16,6 +16,7 @@ class CQLearning:
         self.env = GridEnv(agents=nagents, map_name=map_name, norender=False)  # set up ma environment
         self.targets = self.env.targets
         self.start = self.env.start_pos
+        self.alpha = 1
 
         # individual/local info
         self.qvalues = np.zeros([nagents, self.env.nrows, self.env.ncols, nactions])
@@ -205,24 +206,17 @@ class CQLearning:
             p = pos[i]
             index = self.W1[i][p[0]][p[1]][actions[i]][-1]
             index2 = self.W2[i][p[0]][p[1]][actions[i]][-1]
-            if np.isnan(index):
+            if np.isnan(index):  # check if never updated
                 index = 0
             nextval = self.W1[i][p[0]][p[1]][actions[i]][int(index)]
 
-            if np.isnan(index):  # check if never updated
-                index = 0
+            if np.isnan(nextval):  # check if there are still spaces left
                 self.W1[i][p[0]][p[1]][actions[i]][int(index)] = rew[i]
                 self.W1[i][p[0]][p[1]][actions[i]][-1] = (index + 1) % self.nsaved
 
-            elif np.isnan(nextval):  # check if there are still spaces left
-                self.W1[i][p[0]][p[1]][actions[i]][int(index)] = rew[i]
-                self.W1[i][p[0]][p[1]][actions[i]][-1] = (index + 1) % self.nsaved
-
-            elif np.isnan(index2):  # add to W2
-                index2 = 0
-                self.W2[i][p[0]][p[1]][actions[i]][int(index2)] = rew[i]
-                self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
             else:
+                if np.isnan(index2):  # add to W2
+                    index2 = 0
                 self.W2[i][p[0]][p[1]][actions[i]][int(index2)] = rew[i]
                 self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
 
@@ -238,6 +232,7 @@ class CQLearning:
 
         for e in range(episode_max):
             self.env.reset()
+            done = False
 
             if debug:
                 print('episode : ', e + 1)
@@ -271,6 +266,9 @@ class CQLearning:
                         self.env.render(episode=e + 1)
                     break
 
+            if not done:
+                steps[e] = step_max
+
         return steps, self.joint_qvalues, self.qvalues
 
 if __name__ == "__main__":
@@ -280,6 +278,7 @@ if __name__ == "__main__":
     s, _, _ = cq.run(step_max=150, episode_max=100, debug=True)
     print(s)
 
+    plt.ioff()
     fig = plt.figure(2)
     plt.plot(np.arange(1, 101), s)
     fig.savefig('test.png', bbox_inches='tight')
