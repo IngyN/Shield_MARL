@@ -39,7 +39,7 @@ class CQLearning:
         self.joint_qvalues = np.zeros(dims)
 
         # t-test vars
-        self.test_threshold = 0.2  # 5%
+        self.test_threshold = 0.3
         self.test_threshold2 = 0.2
         self.conf_threshold = 1
         self.conf_max = 50
@@ -62,7 +62,7 @@ class CQLearning:
             single_env.set_start(self.start[a])
             single_env.set_targets(self.targets[a])
             # print('i:', a,'start :', self.start[a], ' - target: ', self.targets[a])
-            qval, hist = singleQL.run(single_env, step_max=250, episode_max=200, discount=0.9,
+            qval, hist = singleQL.run(single_env, step_max=250, episode_max=100, discount=0.9,
                                       debug=False, save=True, N=self.nsaved)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
@@ -71,9 +71,12 @@ class CQLearning:
 
     # Greedy select based on a randomness value epsilon
     def greedy_select(self, qval, epsilon=0.4):
-        flag = random.random()
-        if flag >= epsilon:
-            action = np.argmax(qval)  # choose from qvalues
+        flag = random.randint(0, 99) / 100
+        if flag >= epsilon or epsilon == 0.0:
+            if np.all(qval == np.zeros([self.nactions])):  # if qval is empty, choose randomly
+                action = random.randint(0, self.nactions - 1)
+            else:
+                action = np.argmax(qval)  # choose from qvalues
         else:
             action = random.randint(0, self.nactions - 1)  # choose from random
         return action
@@ -157,12 +160,12 @@ class CQLearning:
                 #  Mark both joint and local state + update index.
                 self.marks[i][states[i][0]][states[i][1]] = 2
                 temp = np.append(states.flatten(), self.start_conf)
-                self.mark_index[i] = self.find_next_index(i)
+                self.mark_index[i] = self.find_next_index(i, temp)
                 if self.mark_index[i] != -1:
                     self.joint_marks[i][self.mark_index[i]] = temp
 
             elif self.marks[i][states[i][0]][states[i][1]] == 0:
-                # if marked as safe -> do not update local # TODO: check if we should update here too.
+                # if marked as safe -> do not update local
                 pass
 
             elif self.mark_index[i] != -1 and np.all(self.joint_marks[i][self.mark_index[i]][:-1] == joint_state):
@@ -191,19 +194,29 @@ class CQLearning:
         return flag
 
     # find the next index to mark in joint_marks -> js in pseudo-code
-    def find_next_index(self, i):  # find next available index for mark
+    def find_next_index(self, i, entry):  # find next available index for mark
         next = int(self.mark_index[i])
         if next == -1:
             next = 0
         start = next
         first = True
-        # either a mark with confidence = 0
-        while self.joint_marks[i][next][-1] != 0:
-            if not first and start == next:  # if we looped over everything
+        found = False
+        # check if already exists
+        for ind in range(0, self.dangerous_max):
+            if np.all(self.joint_marks[i][ind][:-1] == entry[:-1]):  # already exists
                 next = -1
+                found = True
                 break
-            first = False
-            next = (next + 1) % self.dangerous_max
+
+        # either a mark with confidence = 0
+        if not found:
+            while self.joint_marks[i][next][-1] != 0:
+                if not first and start == next:  # if we looped over everything
+                    next = -1
+                    break
+
+                first = False
+                next = (next + 1) % self.dangerous_max
 
         return next
 
@@ -233,7 +246,7 @@ class CQLearning:
 
         alpha_index = 1
         self.discount = discount
-        ep = 0.4
+        start_ep = 0.4
         # print(pos)
         steps = np.zeros([episode_max], dtype=int)
         actions = np.zeros([self.nagents], dtype=int)
@@ -248,7 +261,8 @@ class CQLearning:
             for s in range(step_max):  # loop over steps
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
-                ep = 1 / (0.6 * e + 3) + 0.1
+                # ep = 1 / (0.6 * e + 3) + 0.1
+                ep = start_ep - e * 0.005
                 pos = deepcopy(self.env.pos)  # update pos based in the environment
 
                 if debug:
@@ -282,10 +296,7 @@ class CQLearning:
         return steps, self.joint_qvalues, self.qvalues
 
 
-if __name__ == "__main__":
-    cq = CQLearning(map_name='ISR')
-    cq.initialize_qvalues()
-
+def full_test(cq):
     s, _, _ = cq.run(step_max=150, episode_max=100, debug=False)
     print('steps train: \n', s)
 
@@ -293,12 +304,25 @@ if __name__ == "__main__":
     print('steps test: \n', s2)
 
     plt.ioff()
-    fig = plt.figure(2)
+    plt.figure(2)
     plt.plot(np.arange(1, 101), s)
-    fig.savefig('test.png', bbox_inches='tight')
+    # fig.savefig('test.png', bbox_inches='tight')
     plt.title('Training steps')
 
-    fig = plt.figure(3)
+    plt.figure(3)
     plt.plot(np.arange(1, 11), s2)
     plt.title('Testing steps')
     plt.show()
+
+
+def min_test(cq):
+    s, _, _ = cq.run(step_max=20, episode_max=90, debug=False)
+    print('steps train: \n', s)
+
+
+if __name__ == "__main__":
+    cq = CQLearning(map_name='example')
+    cq.initialize_qvalues()
+
+    # full_test(cq=cq)
+    min_test(cq=cq)
