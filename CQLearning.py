@@ -85,7 +85,7 @@ class CQLearning:
     def retrieve_js(self, states, a):
         ret = np.ones([1, 2 * self.nagents + 1], dtype=int) * -1
         ind = []
-        for i in range(self.joint_marks.shape[0]):
+        for i in range(self.dangerous_max):
             if np.all(self.joint_marks[a][i][2 * a:2 * a + 2] == states[a]):
                 if np.all(ret[0] == np.ones([2 * self.nagents + 1], dtype=int) * -1):
                     ret[0] = self.joint_marks[a][i]
@@ -112,6 +112,7 @@ class CQLearning:
                         if a != i:
                             if np.all(row[2 * a:2 * a + 2] == states[a]):
                                 same[index] = 1
+                                break
                 found = False
                 for j, row in enumerate(same):
                     if np.all(row == np.ones([self.nagents])):  # found one that matches. Should not have duplicates
@@ -123,7 +124,6 @@ class CQLearning:
 
                         temp = self.get_qval(i, indices[j], ret[j][:-1])
                         a = self.greedy_select(temp, epsilon=epsilon)
-                        break
                     else:
                         if ret[j][-1] > 0:
                             self.joint_marks[i][indices[j]][-1] -= 1
@@ -164,7 +164,11 @@ class CQLearning:
                 if self.mark_index[i] != -1:
                     self.joint_marks[i][self.mark_index[i]] = temp
 
-            elif self.marks[i][states[i][0]][states[i][1]] == 0:
+            # TODO add this?
+            # else:
+            #     self.marks[i][states[i][0]][states[i][1]] = 0
+
+            if self.marks[i][states[i][0]][states[i][1]] == 0:
                 # if marked as safe -> do not update local
                 pass
 
