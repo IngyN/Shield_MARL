@@ -3,6 +3,7 @@ from QLearning import QLearning
 from copy import deepcopy
 from gym_grid.envs import GridEnv
 from scipy.stats import ttest_ind, ttest_1samp
+from scipy import stats
 import random, time
 import matplotlib
 import matplotlib.pyplot as plt
@@ -33,7 +34,7 @@ class CQLearning:
         self.mark_index = np.zeros([nagents], dtype=int)
 
         # i, row,col,.., row,col, confidence
-        dims = [nagents, self.dangerous_max]
+        dims = [nagents]
         dims.extend([self.env.nrows, self.env.ncols] * nagents)
         dims.append(self.nactions)
         self.joint_qvalues = np.zeros(dims)
@@ -141,7 +142,7 @@ class CQLearning:
     # Retrieve the joint Q-values for current joint state
     def get_qval(self, i, ind, js):
         qval = self.joint_qvalues[i]
-        qval = qval[ind]
+        # qval = qval[ind]
 
         for e in js:
             qval = qval[e]
@@ -178,22 +179,25 @@ class CQLearning:
                 # new val using new states
                 m_value = self.alpha * (rewards[i] + self.discount * max(self.qvalues[i][obs[i][0]][obs[i][1]]))
                 # old val
-                o_value = (1 - self.alpha) * self.joint_qvalues[i][self.mark_index[i]].item(tuple(index_joint))
-                self.joint_qvalues[i][self.mark_index[i]].itemset(tuple(index_joint), o_value + m_value)
+                o_value = (1 - self.alpha) * self.joint_qvalues[i].item(tuple(index_joint))
+                self.joint_qvalues[i].itemset(tuple(index_joint), o_value + m_value)
 
     # check if statistical tests detect current state as dangerous.
     def is_dangerous(self, rk, rewards, expected_rew, debug=False):
         #  take an action state combination +rewards and determine if state should e marked as dangerous
         flag = False
+        t_crit1 = round(stats.t.ppf(q=self.test_threshold, df=self.nsaved - 1), 3)
+        t_crit2 = round(stats.t.ppf(q=self.test_threshold2, df=self.nsaved - 1), 3)
         t, p_val = ttest_ind(rewards, expected_rew, equal_var=True, nan_policy='omit')  # two  independent sample t-test
         if debug:
             print('test 1: r', rewards, ' e_r:', expected_rew, ' p_val:', p_val, ' t:', t)
-        if p_val < self.test_threshold:
+        if t > abs(t_crit1) and p_val < self.test_threshold:
             # reject hypothesis of equal means -> dangerous
-            t, p_val = ttest_1samp(rewards, rk)  # single sample
+            t, p_val = ttest_1samp(rewards, rk)  # negative direction single sample t-test
+            p_val = p_val * 2  # get one-tailed value
             if debug:
                 print('test 2: rk', rk, ' rew:', rewards, ' p_val:', p_val, ' t:', t)
-            if p_val < self.test_threshold2:  # check if rk < mean of W2
+            if t >= t_crit2 or p_val >= self.test_threshold2:  # check if rk < mean of W2
                 flag = True
         return flag
 
