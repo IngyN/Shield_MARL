@@ -40,11 +40,12 @@ class CQLearning:
         self.joint_qvalues = np.zeros(dims)
 
         # t-test vars
-        self.test_threshold = 0.3
+        self.test_threshold = 0.35
         self.test_threshold2 = 0.2
         self.conf_threshold = 1
         self.conf_max = 50
-        self.start_conf = 10
+        self.start_conf = 20
+        self.delta = 2  # buffer for checking if rk < mean(rewards)
         self.nsaved = 5  # history for observed/expected rewards
 
         # Rewards History
@@ -63,8 +64,8 @@ class CQLearning:
             single_env.set_start(self.start[a])
             single_env.set_targets(self.targets[a])
             # print('i:', a,'start :', self.start[a], ' - target: ', self.targets[a])
-            qval, hist = singleQL.run(single_env, step_max=250, episode_max=100, discount=0.9,
-                                      debug=False, save=True, N=self.nsaved)
+            qval, hist = singleQL.run(single_env, step_max=1000, episode_max=500, discount=0.9,
+                                      debug=False, save=True, N=self.nsaved, epsilon=0.9)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
 
@@ -74,7 +75,7 @@ class CQLearning:
     def greedy_select(self, qval, epsilon=0.4):
         flag = random.randint(0, 99) / 100
         if flag >= epsilon or epsilon == 0.0:
-            if np.all(qval == np.zeros([self.nactions])):  # if qval is empty, choose randomly
+            if np.count_nonzero(qval) < 0.5 * self.nactions:  # if qval is empty, choose randomly
                 action = random.randint(0, self.nactions - 1)
             else:
                 action = np.argmax(qval)  # choose from qvalues
@@ -142,15 +143,13 @@ class CQLearning:
     # Retrieve the joint Q-values for current joint state
     def get_qval(self, i, ind, js):
         qval = self.joint_qvalues[i]
-        # qval = qval[ind]
-
         for e in js:
             qval = qval[e]
 
         return qval
 
     # Update Q-values and marks based on the taken actions and received rewards
-    def update(self, states, obs, rewards, actions):  # TODO: test.
+    def update(self, states, obs, rewards, actions):
         joint_state = states.flatten()
 
         for i in range(self.nagents):
@@ -161,44 +160,54 @@ class CQLearning:
                 #  Mark both joint and local state + update index.
                 self.marks[i][states[i][0]][states[i][1]] = 2
                 temp = np.append(states.flatten(), self.start_conf)
-                self.mark_index[i] = self.find_next_index(i, temp)
-                if self.mark_index[i] != -1:
+                self.mark_index[i], found = self.find_next_index(i, joint_state)
+                if not found:
                     self.joint_marks[i][self.mark_index[i]] = temp
-
-            # TODO add this?
-            # else:
-            #     self.marks[i][states[i][0]][states[i][1]] = 0
 
             if self.marks[i][states[i][0]][states[i][1]] == 0:
                 # if marked as safe -> do not update local
                 pass
 
-            elif self.mark_index[i] != -1 and np.all(self.joint_marks[i][self.mark_index[i]][:-1] == joint_state):
-                # update joint qvalues
-                index_joint = np.append(joint_state, actions[i])
-                # new val using new states
-                m_value = self.alpha * (rewards[i] + self.discount * max(self.qvalues[i][obs[i][0]][obs[i][1]]))
-                # old val
-                o_value = (1 - self.alpha) * self.joint_qvalues[i].item(tuple(index_joint))
-                self.joint_qvalues[i].itemset(tuple(index_joint), o_value + m_value)
+            else:
+                self.mark_index[i], found = self.find_next_index(i, joint_state)
+                if found and np.all(self.joint_marks[i][self.mark_index[i]][:-1] == joint_state):
+                    # update joint qvalues
+                    index_joint = np.append(joint_state, actions[i])
+                    # new val using new states
+                    m_value = self.alpha * (rewards[i] + self.discount * max(self.qvalues[i][obs[i][0]][obs[i][1]]))
+                    # old val
+                    o_value = (1 - self.alpha) * self.joint_qvalues[i].item(tuple(index_joint))
+                    self.joint_qvalues[i].itemset(tuple(index_joint), o_value + m_value)
 
     # check if statistical tests detect current state as dangerous.
-    def is_dangerous(self, rk, rewards, expected_rew, debug=False):
+    def is_dangerous(self, rk, rewards, expected_rew, debug=False, v2=True):
         #  take an action state combination +rewards and determine if state should e marked as dangerous
         flag = False
         t_crit1 = round(stats.t.ppf(q=self.test_threshold, df=self.nsaved - 1), 3)
+        n_crit1 = t_crit1 if t_crit1 < 0 else -t_crit1
+
         t_crit2 = round(stats.t.ppf(q=self.test_threshold2, df=self.nsaved - 1), 3)
         t, p_val = ttest_ind(rewards, expected_rew, equal_var=True, nan_policy='omit')  # two  independent sample t-test
+
         if debug:
             print('test 1: r', rewards, ' e_r:', expected_rew, ' p_val:', p_val, ' t:', t)
-        if t > abs(t_crit1) and p_val < self.test_threshold:
+
+        if (t > abs(t_crit1) or t < n_crit1) and p_val < self.test_threshold:
             # reject hypothesis of equal means -> dangerous
-            t, p_val = ttest_1samp(rewards, rk)  # negative direction single sample t-test
-            p_val = p_val * 2  # get one-tailed value
-            if debug:
-                print('test 2: rk', rk, ' rew:', rewards, ' p_val:', p_val, ' t:', t)
-            if t >= t_crit2 or p_val >= self.test_threshold2:  # check if rk < mean of W2
+
+            if not v2:
+                t, p_val = ttest_1samp(rewards, rk)  # negative direction single sample t-test
+                t = -t  # probably shouldn't do this, but it makes it work
+                p_val = p_val * 2  # get one-tailed value
+                if debug:
+                    print('test 2: rk', rk, ' rew:', rewards, ' p_val:', p_val, ' t:', t)
+
+                if t < t_crit2 and p_val < self.test_threshold2:  # fail to reject, check if rk < mean of W2
+                    flag = True
+
+            elif rk + self.delta < np.mean(rewards):
                 flag = True
+
         return flag
 
     # find the next index to mark in joint_marks -> js in pseudo-code
@@ -211,8 +220,8 @@ class CQLearning:
         found = False
         # check if already exists
         for ind in range(0, self.dangerous_max):
-            if np.all(self.joint_marks[i][ind][:-1] == entry[:-1]):  # already exists
-                next = -1
+            if np.all(self.joint_marks[i][ind][:-1] == entry):  # already exists
+                next = ind
                 found = True
                 break
 
@@ -226,7 +235,7 @@ class CQLearning:
                 first = False
                 next = (next + 1) % self.dangerous_max
 
-        return next
+        return next, found
 
     # updated the observed rewards for W1 and W2
     def update_W(self, pos, actions, rew):
@@ -249,18 +258,22 @@ class CQLearning:
                 self.W2[i][p[0]][p[1]][actions[i]][int(index2)] = rew[i]
                 self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
 
+    def reset_W(self):
+        self.W2 = deepcopy(self.W1)
+
     # non shielded running of the algorithm
     def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False):
 
         alpha_index = 1
         self.discount = discount
-        start_ep = 0.4
+        start_ep = 0.9
         # print(pos)
         steps = np.zeros([episode_max], dtype=int)
         actions = np.zeros([self.nagents], dtype=int)
 
         for e in range(episode_max):  # loop over episodes
             self.env.reset()
+            # self.reset_W()
             done = False
 
             if debug:
@@ -270,7 +283,7 @@ class CQLearning:
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
                 # ep = 1 / (0.6 * e + 3) + 0.1
-                ep = start_ep - e * 0.005
+                ep = start_ep - e * 0.0002 if e > episode_max * 0.9 else start_ep
                 pos = deepcopy(self.env.pos)  # update pos based in the environment
 
                 if debug:
@@ -305,20 +318,24 @@ class CQLearning:
 
 
 def full_test(cq):
-    s, _, _ = cq.run(step_max=150, episode_max=100, debug=False)
+    ep_train = 500
+    steps_train = 500
+    steps_test = 50
+    ep_test = 10
+    s, _, _ = cq.run(step_max=steps_train, episode_max=ep_train, debug=False)
     print('steps train: \n', s)
 
-    s2, _, _ = cq.run(step_max=50, episode_max=10, testing=True, debug=True)
+    s2, _, _ = cq.run(step_max=steps_test, episode_max=ep_test, testing=True, debug=True)
     print('steps test: \n', s2)
 
     plt.ioff()
     plt.figure(2)
-    plt.plot(np.arange(1, 101), s)
+    plt.plot(np.arange(1, ep_train + 1), s)
     # fig.savefig('test.png', bbox_inches='tight')
     plt.title('Training steps')
 
     plt.figure(3)
-    plt.plot(np.arange(1, 11), s2)
+    plt.plot(np.arange(1, ep_test + 1), s2)
     plt.title('Testing steps')
     plt.show()
 
@@ -329,8 +346,8 @@ def min_test(cq):
 
 
 if __name__ == "__main__":
-    cq = CQLearning(map_name='example')
+    cq = CQLearning(map_name='MIT')
     cq.initialize_qvalues()
 
-    # full_test(cq=cq)
-    min_test(cq=cq)
+    full_test(cq=cq)
+    # min_test(cq=cq)
