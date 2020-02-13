@@ -283,7 +283,7 @@ class CQLearning:
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
                 # ep = 1 / (0.6 * e + 3) + 0.1
-                ep = start_ep - e * 0.0002 if e > episode_max * 0.9 else start_ep
+                ep = start_ep - e * 0.0003 if e > episode_max * 0.85 else start_ep
                 pos = deepcopy(self.env.pos)  # update pos based in the environment
 
                 if debug:
