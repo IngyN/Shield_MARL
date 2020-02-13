@@ -55,7 +55,7 @@ class CQLearning:
                            self.nsaved + 1]) * np.nan  # nan vals were not initialized
 
     # Initialize the local q-values using Q-learning for each agent as well as rewards history W1.
-    def initialize_qvalues(self):
+    def initialize_qvalues(self, step_max=250, episode_max=200):
         single_env = GridEnv(agents=1, map_name=self.map_name)
         singleQL = QLearning([single_env.nrows, single_env.ncols])
 
@@ -64,7 +64,7 @@ class CQLearning:
             single_env.set_start(self.start[a])
             single_env.set_targets(self.targets[a])
             # print('i:', a,'start :', self.start[a], ' - target: ', self.targets[a])
-            qval, hist = singleQL.run(single_env, step_max=1000, episode_max=500, discount=0.9,
+            qval, hist = singleQL.run(single_env, step_max=step_max, episode_max=episode_max, discount=0.9,
                                       debug=False, save=True, N=self.nsaved, epsilon=0.9)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
@@ -322,6 +322,11 @@ def full_test(cq):
     steps_train = 500
     steps_test = 50
     ep_test = 10
+    # MIT
+    # ep_train = 500
+    # steps_train = 500
+    # steps_test = 50
+    # ep_test = 10
     s, _, _ = cq.run(step_max=steps_train, episode_max=ep_train, debug=False)
     print('steps train: \n', s)
 
@@ -348,6 +353,8 @@ def min_test(cq):
 if __name__ == "__main__":
     cq = CQLearning(map_name='MIT')
     cq.initialize_qvalues()
+    # MIT
+    # cq.initialize_qvalues(episode_max= 1000, step_max=500)
 
     full_test(cq=cq)
     # min_test(cq=cq)
