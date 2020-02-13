@@ -1,5 +1,6 @@
 import numpy as np
 from QLearning import QLearning
+from Shield import Shield
 from copy import deepcopy
 from gym_grid.envs import GridEnv
 from scipy.stats import ttest_ind, ttest_1samp
@@ -314,7 +315,7 @@ class CQLearning:
             if not done:  # if episode terminated without agents reaching their goals
                 steps[e] = step_max
 
-        return steps, self.joint_qvalues, self.qvalues
+        return steps + 1, self.joint_qvalues, self.qvalues
 
 
 def full_test(cq):
