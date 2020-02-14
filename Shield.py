@@ -44,7 +44,7 @@ class Shield:
 
     #  use actions and current shield state to determine if action is dangerous.
     def step(self, act):
-        actions = np.zeros([self.nagents])
+        actions = np.zeros([self.nagents], dtype=int)
         successors = np.array(self.shield_json[str(self.current_state)]['Successors'])
 
         for s in successors:
