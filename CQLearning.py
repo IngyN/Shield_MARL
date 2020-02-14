@@ -347,16 +347,17 @@ class CQLearning:
                 if shielding:
                     pre_actions = deepcopy(actions)
                     actions = self.shield.step(actions)
-                    punish = (pre_actions == actions)
+                    punish = (pre_actions != actions)
 
                 # update environment and retrieve rewards:
                 obs, rew, _, done = self.env.step(actions)  # sample rewards and new states
 
                 if shielding:  # punish pre_actions that were changed extra. TODO: test
-                    rew_shield = deepcopy(rew)
-                    rew_shield[punish] = -10
-                    self.update_W(pos, pre_actions, rew_shield)
-                    self.update(pos, obs, rew_shield, actions)
+                    if not np.all(punish == False):
+                        rew_shield = deepcopy(rew)
+                        rew_shield[punish] = -10
+                        self.update_W(pos, pre_actions, rew_shield)
+                        self.update(pos, obs, rew_shield, pre_actions)
 
                 self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudo-code.
                 self.update(pos, obs, rew, actions)  # update marks and qvalues
