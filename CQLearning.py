@@ -262,7 +262,45 @@ class CQLearning:
     def reset_W(self):
         self.W2 = deepcopy(self.W1)
 
-    def load_shield(self):  # TODO
+    def get_recommended_training_vars(self):  # save recommended training vars.
+        # joint :
+        step_max = 250
+        episode_max = 200
+
+        if self.map_name == 'example':
+            pass
+        elif self.map_name == 'ISR':
+            pass
+        elif self.map_name == 'Pentagon':
+            pass
+        elif self.map_name == 'MIT':
+            step_max = 500
+            episode_max = 500
+
+        elif self.map_name == 'SUNY':
+            step_max = 500
+            episode_max = 500
+
+        # independent
+        i_step_max = 250
+        i_episode_max = 200
+        if self.map_name == 'example':
+            pass
+        elif self.map_name == 'ISR':
+            pass
+        elif self.map_name == 'Pentagon':
+            pass
+        elif self.map_name == 'MIT':
+            i_step_max = 500
+            i_episode_max = 1000
+
+        elif self.map_name == 'SUNY':
+            i_step_max = 500
+            i_episode_max = 1000
+
+        return i_step_max, i_episode_max, step_max, episode_max
+
+    def load_shield(self):
         dir = 'shields/collision_' + self.map_name + '_opt.shield'
         self.shield = Shield(self.nagents, start=self.start, file=dir)
 
@@ -340,6 +378,8 @@ class CQLearning:
 
 
 def full_test(cq):
+    cq.initialize_qvalues()
+
     ep_train = 500
     steps_train = 500
     steps_test = 50
@@ -368,15 +408,22 @@ def full_test(cq):
 
 
 def min_test(cq):
+    cq.initialize_qvalues()
     s, _, _ = cq.run(step_max=20, episode_max=90, debug=False)
     print('steps train: \n', s)
 
 
-if __name__ == "__main__":
-    cq = CQLearning(map_name='MIT')
+def shield_test(cq):
     cq.initialize_qvalues()
+    s, _, _ = cq.run(step_max=20, episode_max=90, debug=False, shielding=True)
+    print('steps train: \n', s)
+
+
+if __name__ == "__main__":
+    cq = CQLearning(map_name='ISR')
     # MIT
     # cq.initialize_qvalues(episode_max= 1000, step_max=500)
 
-    full_test(cq=cq)
+    # full_test(cq=cq)
     # min_test(cq=cq)
+    shield_test(cq=cq)
