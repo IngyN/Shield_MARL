@@ -70,4 +70,13 @@ class Shield:
 
 # for testing
 if __name__ == "__main__":
-    Shield()
+    shield = Shield()
+    actions = np.array([4, 3])
+    sactions = shield.step(actions)
+    print('Start actions:', actions, 'Shield actions:', sactions)
+    actions = np.array([4, 2])
+    sactions = shield.step(actions)
+    print('Start actions:', actions, 'Shield actions:', sactions)
+    actions = np.array([4, 3])
+    sactions = shield.step(actions)
+    print('Start actions:', actions, 'Shield actions:', sactions)
