@@ -378,22 +378,23 @@ class CQLearning:
         return steps + 1, self.joint_qvalues, self.qvalues
 
 
-def full_test(cq):
-    cq.initialize_qvalues()
-
-    ep_train = 500
-    steps_train = 500
+def full_test(cq, shielding=False):
+    ep_train = 200
+    steps_train = 250
     steps_test = 50
     ep_test = 10
+
     # MIT
     # ep_train = 500
     # steps_train = 500
     # steps_test = 50
     # ep_test = 10
-    s, _, _ = cq.run(step_max=steps_train, episode_max=ep_train, debug=False)
+    cq.initialize_qvalues(step_max=steps_train, episode_max=ep_train)
+
+    s, _, _ = cq.run(step_max=steps_train, episode_max=ep_train, debug=False, shielding=shielding)
     print('steps train: \n', s)
 
-    s2, _, _ = cq.run(step_max=steps_test, episode_max=ep_test, testing=True, debug=True)
+    s2, _, _ = cq.run(step_max=steps_test, episode_max=ep_test, testing=True, debug=True, shielding=shielding)
     print('steps test: \n', s2)
 
     plt.ioff()
@@ -425,6 +426,6 @@ if __name__ == "__main__":
     # MIT
     # cq.initialize_qvalues(episode_max= 1000, step_max=500)
 
-    # full_test(cq=cq)
+    full_test(cq=cq, shielding=True)
     # min_test(cq=cq)
-    shield_test(cq=cq)
+    # shield_test(cq=cq)
