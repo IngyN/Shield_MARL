@@ -262,8 +262,12 @@ class CQLearning:
     def reset_W(self):
         self.W2 = deepcopy(self.W1)
 
+    def load_shield(self):  # TODO
+        dir = 'shields/collision_' + self.map_name + '_opt.shield'
+        self.shield = Shield(self.nagents, start=self.start, file=dir)
+
     # non shielded running of the algorithm
-    def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False):
+    def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False):
 
         alpha_index = 1
         self.discount = discount
@@ -272,8 +276,14 @@ class CQLearning:
         steps = np.zeros([episode_max], dtype=int)
         actions = np.zeros([self.nagents], dtype=int)
 
+        if shielding:
+            pre_actions = np.zeros([self.nagents], dtype=int)
+            self.load_shield()
+
         for e in range(episode_max):  # loop over episodes
             self.env.reset()
+            if shielding:
+                self.shield.reset()
             # self.reset_W()
             done = False
 
@@ -296,10 +306,21 @@ class CQLearning:
                     else:
                         actions[a] = self.action_selection(pos, a, epsilon=0)
 
+                if shielding:
+                    pre_actions = deepcopy(actions)
+                    actions = self.shield.step(actions)
+                    punish = (pre_actions == actions)
+
                 # update environment and retrieve rewards:
                 obs, rew, _, done = self.env.step(actions)  # sample rewards and new states
-                self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudo-code.
 
+                if shielding:  # punish pre_actions that were changed extra. TODO: test
+                    rew_shield = deepcopy(rew)
+                    rew_shield[punish] = -10
+                    self.update_W(pos, pre_actions, rew_shield)
+                    self.update(pos, obs, rew_shield, actions)
+
+                self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudo-code.
                 self.update(pos, obs, rew, actions)  # update marks and qvalues
 
                 # if debug:  # and s > step_max*0.6:

@@ -4,7 +4,7 @@ import numpy as np
 class Shield:
 
     # Centralized shield version
-    def __init__(self, nagents=2, start=[[7, 0], [6, 3]], file='shields/collision_ISR_opt.shield'):
+    def __init__(self, nagents=2, start=np.array([[7, 0], [6, 3]]), file='shields/collision_ISR_opt.shield'):
         self.current_state = 0
         self.nagents = nagents
 
