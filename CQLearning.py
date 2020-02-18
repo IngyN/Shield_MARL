@@ -15,7 +15,7 @@ class CQLearning:
         self.nagents = nagents
         self.nactions = nactions
         self.map_name = map_name
-        self.env = GridEnv(agents=nagents, map_name=map_name, norender=False)  # set up ma environment
+        self.env = GridEnv(nagents=nagents, map_name=map_name, norender=False)  # set up ma environment
         self.targets = self.env.targets
         self.start = self.env.start_pos
         self.alpha = 1
@@ -55,9 +55,12 @@ class CQLearning:
         self.W2 = np.ones([nagents, self.env.nrows, self.env.ncols, nactions,
                            self.nsaved + 1]) * np.nan  # nan vals were not initialized
 
+    def reset(self):
+        self.__init__(self.map_name, self.nagents, self.nactions)
+
     # Initialize the local q-values using Q-learning for each agent as well as rewards history W1.
     def initialize_qvalues(self, step_max=250, episode_max=200):
-        single_env = GridEnv(agents=1, map_name=self.map_name)
+        single_env = GridEnv(nagents=1, map_name=self.map_name)
         singleQL = QLearning([single_env.nrows, single_env.ncols])
 
         for a in range(self.nagents):
@@ -373,14 +376,14 @@ class CQLearning:
                     break
 
             if not done:  # if episode terminated without agents reaching their goals
-                steps[e] = step_max
+                steps[e] = step_max - 1
 
         return steps + 1, self.joint_qvalues, self.qvalues
 
 
 def full_test(cq, shielding=False):
-    ep_train = 200
-    steps_train = 250
+    ep_train = 500
+    steps_train = 500
     steps_test = 50
     ep_test = 10
 
@@ -422,10 +425,10 @@ def shield_test(cq):
 
 
 if __name__ == "__main__":
-    cq = CQLearning(map_name='ISR')
+    cq = CQLearning(map_name='ISR', nagents=3)
     # MIT
     # cq.initialize_qvalues(episode_max= 1000, step_max=500)
 
-    full_test(cq=cq, shielding=True)
+    full_test(cq=cq, shielding=False)
     # min_test(cq=cq)
     # shield_test(cq=cq)
