@@ -6,6 +6,7 @@ import numpy as np
 map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
 agents = 2
 
+# Loop over all maps
 for m in map_names:
     cq = CQLearning(map_name=m, nagents=agents)
     steps_test = 50
