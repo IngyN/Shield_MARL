@@ -25,12 +25,12 @@ for m in map_names:
     plt.ioff()
     fig = plt.figure(2)
     plt.plot(np.arange(1, episode_max + 1), s)
-    fig.savefig('figures/cq_' + m + '_train.png', bbox_inches='tight')
+    fig.savefig('figures/cq_' + m + '_' + str(agents) + '_train.png', bbox_inches='tight')
     plt.title('Training steps')
 
     fig3 = plt.figure(3)
     plt.plot(np.arange(1, ep_test + 1), s2)
     plt.title('Testing steps')
-    fig3.savefig('figures/cq_' + m + '_test.png', bbox_inches='tight')
+    fig3.savefig('figures/cq_' + m + '_' + str(agents) + '_test.png', bbox_inches='tight')
 
     plt.show()

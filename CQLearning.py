@@ -312,7 +312,7 @@ class CQLearning:
 
         alpha_index = 1
         self.discount = discount
-        start_ep = 0.9
+        start_ep = 0.85
         # print(pos)
         steps = np.zeros([episode_max], dtype=int)
         actions = np.zeros([self.nagents], dtype=int)
@@ -335,7 +335,7 @@ class CQLearning:
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
                 # ep = 1 / (0.6 * e + 3) + 0.1
-                ep = start_ep - e * 0.0003 if e > episode_max * 0.85 else start_ep
+                ep = start_ep - e * 0.0002 if e > episode_max * 0.87 else start_ep
                 pos = deepcopy(self.env.pos)  # update pos based in the environment
 
                 if debug:
@@ -345,7 +345,7 @@ class CQLearning:
                     if not testing:
                         actions[a] = self.action_selection(pos, a, epsilon=ep)  # select actions for each agent
                     else:
-                        actions[a] = self.action_selection(pos, a, epsilon=0)
+                        actions[a] = self.action_selection(pos, a, epsilon=0.05)
 
                 if shielding:
                     pre_actions = deepcopy(actions)
@@ -355,7 +355,7 @@ class CQLearning:
                 # update environment and retrieve rewards:
                 obs, rew, _, done = self.env.step(actions)  # sample rewards and new states
 
-                if shielding:  # punish pre_actions that were changed extra. TODO: test
+                if shielding:  # punish pre_actions that were changed extra.
                     if not np.all(punish == False):
                         rew_shield = deepcopy(rew)
                         rew_shield[punish] = -10
@@ -382,7 +382,7 @@ class CQLearning:
 
 
 def full_test(cq, shielding=False):
-    ep_train = 500
+    ep_train = 600
     steps_train = 500
     steps_test = 50
     ep_test = 10
@@ -425,7 +425,7 @@ def shield_test(cq):
 
 
 if __name__ == "__main__":
-    cq = CQLearning(map_name='ISR', nagents=3)
+    cq = CQLearning(map_name='Pentagon', nagents=2)
     # MIT
     # cq.initialize_qvalues(episode_max= 1000, step_max=500)
 
