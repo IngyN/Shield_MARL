@@ -429,6 +429,6 @@ if __name__ == "__main__":
     # MIT
     # cq.initialize_qvalues(episode_max= 1000, step_max=500)
 
-    full_test(cq=cq, shielding=False)
-    # min_test(cq=cq)
+    # full_test(cq=cq, shielding=False)
+    min_test(cq=cq)
     # shield_test(cq=cq)
