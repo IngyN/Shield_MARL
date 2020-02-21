@@ -317,6 +317,11 @@ class CQLearning:
         steps = np.zeros([episode_max], dtype=int)
         actions = np.zeros([self.nagents], dtype=int)
 
+        # Evaluation metrics
+        acc_rew = np.zeros([episode_max, self.nagents])
+        collision = np.zeros([episode_max])
+        interference = np.zeros([self.nagents, episode_max])
+
         if shielding:
             pre_actions = np.zeros([self.nagents], dtype=int)
             self.load_shield()
@@ -351,9 +356,15 @@ class CQLearning:
                     pre_actions = deepcopy(actions)
                     actions = self.shield.step(actions)
                     punish = (pre_actions != actions)
+                    if len(interference[punish]) > 0:
+                        idx_values = np.where(punish == True)[0]
+                        for idx in idx_values:
+                            interference[idx][e] += 1
 
                 # update environment and retrieve rewards:
-                obs, rew, _, done = self.env.step(actions)  # sample rewards and new states
+                obs, rew, info, done = self.env.step(actions)  # sample rewards and new states
+                acc_rew[e] += rew
+                collision[e] += info['collisions']
 
                 if shielding:  # punish pre_actions that were changed extra.
                     if not np.all(punish == False):
@@ -378,11 +389,11 @@ class CQLearning:
             if not done:  # if episode terminated without agents reaching their goals
                 steps[e] = step_max - 1
 
-        return steps + 1, self.joint_qvalues, self.qvalues
+        return steps + 1, acc_rew, collision, interference
 
 
 def full_test(cq, shielding=False):
-    ep_train = 600
+    ep_train = 500
     steps_train = 500
     steps_test = 50
     ep_test = 10
@@ -394,10 +405,13 @@ def full_test(cq, shielding=False):
     # ep_test = 10
     cq.initialize_qvalues(step_max=steps_train, episode_max=ep_train)
 
-    s, _, _ = cq.run(step_max=steps_train, episode_max=ep_train, debug=False, shielding=shielding)
+    s, acc, coll, inter = cq.run(step_max=steps_train, episode_max=ep_train, debug=False, shielding=shielding)
     print('steps train: \n', s)
+    print('coll train: \n', coll)
+    if shielding:
+        print('inter train: \n', inter)
 
-    s2, _, _ = cq.run(step_max=steps_test, episode_max=ep_test, testing=True, debug=True, shielding=shielding)
+    s2, _, _, _ = cq.run(step_max=steps_test, episode_max=ep_test, testing=True, debug=True, shielding=shielding)
     print('steps test: \n', s2)
 
     plt.ioff()
@@ -409,26 +423,42 @@ def full_test(cq, shielding=False):
     plt.figure(3)
     plt.plot(np.arange(1, ep_test + 1), s2)
     plt.title('Testing steps')
+
+    plt.figure(4)
+    plt.plot(np.arange(1, ep_train + 1), acc[:, 0])
+    plt.plot(np.arange(1, ep_train + 1), acc[:, 1])
+    plt.title('Accumulated rewards per agent per episode')
+
+    plt.figure(5)
+    plt.plot(np.arange(1, ep_train + 1), coll)
+    plt.title('Collisions')
+
+    if shielding:
+        plt.figure(6)
+        plt.plot(np.arange(1, ep_train + 1), inter[0, :])
+        plt.plot(np.arange(1, ep_train + 1), inter[1, :])
+        plt.title('Shield Interference')
+
     plt.show()
 
 
 def min_test(cq):
     cq.initialize_qvalues()
-    s, _, _ = cq.run(step_max=20, episode_max=90, debug=False)
+    s, _, _, _ = cq.run(step_max=20, episode_max=90, debug=False)
     print('steps train: \n', s)
 
 
 def shield_test(cq):
     cq.initialize_qvalues()
-    s, _, _ = cq.run(step_max=20, episode_max=90, debug=False, shielding=True)
+    s, _, _, _ = cq.run(step_max=20, episode_max=90, debug=False, shielding=True)
     print('steps train: \n', s)
 
 
 if __name__ == "__main__":
-    cq = CQLearning(map_name='Pentagon', nagents=2)
+    cq = CQLearning(map_name='ISR', nagents=2)
     # MIT
     # cq.initialize_qvalues(episode_max= 1000, step_max=500)
 
-    # full_test(cq=cq, shielding=False)
-    min_test(cq=cq)
+    full_test(cq=cq, shielding=True)
+    # min_test(cq=cq)
     # shield_test(cq=cq)
