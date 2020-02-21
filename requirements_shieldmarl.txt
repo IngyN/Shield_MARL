@@ -27,8 +27,8 @@ lockfile==0.12.2
 #-e /Users/ingy/Downloads/multi-agent-emergence-environments
 Markdown==3.1.1
 matplotlib==3.0.0
-mujoco-py==1.50.1.68
-mujoco-worldgen==0.0.0
+#mujoco-py==1.50.1.68
+#mujoco-worldgen==0.0.0
 # Editable install with no version control (multiagent==0.0.1)
 #-e /Users/ingy/Downloads/multiagent-particle-envs
 numpy==1.17.4
