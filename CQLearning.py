@@ -8,6 +8,7 @@ from scipy import stats
 import random, time
 import matplotlib
 import matplotlib.pyplot as plt
+from plotting import plot_v2
 
 
 class CQLearning:
@@ -413,33 +414,6 @@ def full_test(cq, shielding=False):
 
     s2, _, _, _ = cq.run(step_max=steps_test, episode_max=ep_test, testing=True, debug=True, shielding=shielding)
     print('steps test: \n', s2)
-
-    plt.ioff()
-    plt.figure(2)
-    plt.plot(np.arange(1, ep_train + 1), s)
-    # fig.savefig('test.png', bbox_inches='tight')
-    plt.title('Training steps')
-
-    plt.figure(3)
-    plt.plot(np.arange(1, ep_test + 1), s2)
-    plt.title('Testing steps')
-
-    plt.figure(4)
-    plt.plot(np.arange(1, ep_train + 1), acc[:, 0])
-    plt.plot(np.arange(1, ep_train + 1), acc[:, 1])
-    plt.title('Accumulated rewards per agent per episode')
-
-    plt.figure(5)
-    plt.plot(np.arange(1, ep_train + 1), coll)
-    plt.title('Collisions')
-
-    if shielding:
-        plt.figure(6)
-        plt.plot(np.arange(1, ep_train + 1), inter[0, :])
-        plt.plot(np.arange(1, ep_train + 1), inter[1, :])
-        plt.title('Shield Interference')
-
-    plt.show()
 
 
 def min_test(cq):
