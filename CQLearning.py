@@ -314,11 +314,10 @@ class CQLearning:
         alpha_index = 1
         self.discount = discount
         start_ep = 0.85
-        # print(pos)
-        steps = np.zeros([episode_max], dtype=int)
         actions = np.zeros([self.nagents], dtype=int)
 
         # Evaluation metrics
+        steps = np.zeros([episode_max], dtype=int)
         acc_rew = np.zeros([episode_max, self.nagents])
         collision = np.zeros([episode_max])
         interference = np.zeros([self.nagents, episode_max])

@@ -11,7 +11,7 @@ steps_test = 50
 ep_test = 10
 iterations = 1
 display = True
-save = False
+save = True
 
 
 def format_data(steps, acc, coll, inter, ep):
@@ -26,19 +26,33 @@ def format_data(steps, acc, coll, inter, ep):
 
 
 # Loop over all maps
-for i in range(iterations):
-    for m in map_names:
-        cq = CQLearning(map_name=m, nagents=agents)
+for m in map_names:
+    cq = CQLearning(map_name=m, nagents=agents)
+    i_step_max, i_episode_max, step_max, episode_max = cq.get_recommended_training_vars()
 
-        i_step_max, i_episode_max, step_max, episode_max = cq.get_recommended_training_vars()
+    # training
+    s = np.zeros([iterations, episode_max], dtype=int)
+    acc = np.zeros([iterations, episode_max, agents])
+    coll = np.zeros([iterations, episode_max])
+    inter = np.zeros([iterations, agents, episode_max])
 
+    # testing
+    s2 = np.zeros([iterations, ep_test], dtype=int)
+    acc2 = np.zeros([iterations, ep_test, agents])
+    coll2 = np.zeros([iterations, ep_test])
+    inter2 = np.zeros([iterations, agents, ep_test])
+
+    for i in range(iterations):
         cq.initialize_qvalues(step_max=i_step_max, episode_max=i_episode_max)
 
-        s, acc, coll, inter = cq.run(step_max=step_max, episode_max=episode_max, debug=False, shielding=shielding)
-        train_data = format_data(s, acc, coll, inter, episode_max)
-        plot_v2(train_data, agents=agents, map=m, test=False, shielding=shielding, save=save, display=display)
+        s[i], acc[i], coll[i], inter[i] = cq.run(step_max=step_max, episode_max=episode_max,
+                                                 debug=False, shielding=shielding)
+        train_data = format_data(s[i], acc[i], coll[i], inter[i], episode_max)
+        plot_v2(train_data, agents=agents, map=m, test=False, shielding=shielding, save=save, display=False)
 
-        # s2, _, _, _ = cq.run(step_max=steps_test, episode_max=ep_test, testing=True, debug=True, shielding=shielding)
-        # print('steps test: \n', s2)
-        #
-        # plot_and_save(shielding=shielding,save=save, display = display)
+        s2[i], acc2[i], coll2[i], inter2[i] = cq.run(step_max=steps_test, episode_max=ep_test,
+                                                     testing=True, debug=True, shielding=shielding)
+        test_data = format_data(s2[i], acc2[i], coll2[i], inter2[i], ep_test)
+        plot_v2(test_data, agents=agents, map=m, test=True, shielding=shielding, save=save, display=display)
+
+        cq.reset()

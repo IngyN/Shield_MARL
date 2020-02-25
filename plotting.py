@@ -12,10 +12,17 @@ def plot_v2(data, agents, map='example', test=False, shielding=False, save=True,
     matplotlib.rc('font', **font)
 
     # Setup figure and subplots
-    f1 = plt.figure(num=1, figsize=(15, 15))  # , dpi = 300)
     if not test:
+        f1 = plt.figure(num=1, figsize=(9, 12))  # , dpi = 300)
+        f1.set_figheight(9)
+        f1.set_figwidth(12)
+        f1.canvas.set_window_title('Train')
         f1.suptitle("Training Results for " + str(agents) + ' agents on the ' + map + ' map', fontsize=12)
     else:
+        f1 = plt.figure(num=2, figsize=(9, 12))  # , dpi = 300)
+        f1.set_figheight(9)
+        f1.set_figwidth(12)
+        f1.canvas.set_window_title('Test')
         f1.suptitle("Test Results for " + str(agents) + ' agents on the ' + map + ' map', fontsize=12)
 
     ax01 = plt.subplot2grid((2, 2), (0, 0))
@@ -31,7 +38,10 @@ def plot_v2(data, agents, map='example', test=False, shielding=False, save=True,
     ax04.set_title('Interferences', size=10)
 
     # set y-limits
-    ax01.set_ylim(0, 500)
+    if not test:
+        ax01.set_ylim(0, 500)
+    else:
+        ax01.set_ylim(0, 200)
     ax02.set_ylim(-2000, 500)
     ax03.set_ylim(0, 500)
     ax04.set_ylim(0, 500)
@@ -87,12 +97,12 @@ def plot_v2(data, agents, map='example', test=False, shielding=False, save=True,
     if shielding:
         ax04.legend(inter_plots, inter_labels)
 
-    plt.subplots_adjust(wspace=0.42, hspace=0.45)
+    plt.subplots_adjust(left=0.12, right=0.9, wspace=0.33, hspace=0.31)
     if save:
         if not test:
-            f1.savefig('figures/cq_' + map + '_' + str(agents) + '_train.png', bbox_inches='tight')
+            f1.savefig('figures/4_cq_' + map + '_' + str(agents) + '_train.png', bbox_inches='tight')
         else:
-            f1.savefig('figures/cq_' + map + '_' + str(agents) + '_test.png', bbox_inches='tight')
+            f1.savefig('figures/4_cq_' + map + '_' + str(agents) + '_test.png', bbox_inches='tight')
 
     if display:
         plt.show()
