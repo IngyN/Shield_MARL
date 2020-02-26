@@ -59,9 +59,9 @@ def plot_v2(data, agents, map='example', test=False, shielding=False, save=True,
     ax04.grid(True)
 
     # set label names
-    ax01.set_xlabel("Episodes")
+    # ax01.set_xlabel("Episodes")
     ax01.set_ylabel("Steps")
-    ax02.set_xlabel("Episodes")
+    # ax02.set_xlabel("Episodes")
     ax02.set_ylabel("Accumulated Reward")
     ax03.set_xlabel("Episodes")
     ax03.set_ylabel("Collisions")

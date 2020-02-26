@@ -1,6 +1,6 @@
 from CQLearning import CQLearning
 from plotting import plot_v2
-from custom_logger import log_results
+from custom_logger import CustomLogger
 import numpy as np
 
 # map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
@@ -13,6 +13,7 @@ ep_test = 10
 iterations = 1
 display = True
 save = True
+logger = CustomLogger(agents)
 
 
 def format_data(steps, acc, coll, inter, ep):
@@ -30,7 +31,8 @@ def format_data(steps, acc, coll, inter, ep):
 for m in map_names:
     cq = CQLearning(map_name=m, nagents=agents)
     i_step_max, i_episode_max, step_max, episode_max = cq.get_recommended_training_vars()
-
+    i_episode_max = 100
+    episode_max = 100
     train_data = []
     test_data = []
 
@@ -53,4 +55,4 @@ for m in map_names:
         cq.reset()
 
     # Log information
-    log_results(test_data, train_data, agents, iterations)
+    logger.log_results(test_data, train_data, shielding, iterations)
