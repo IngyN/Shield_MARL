@@ -47,13 +47,13 @@ class CustomLogger:
 
         # train data
         entry[self.cols[3]] = ep_train
-        entry[self.cols[4]] = sum_steps / (ep_train)
-        entry[self.cols[5]] = sum_coll / (ep_train)
+        entry[self.cols[4]] = sum_steps / (ep_train * iterations)
+        entry[self.cols[5]] = sum_coll / (ep_train * iterations)
 
         cur_ind = 6
         for i in range(self.nagents):
-            entry[self.cols[cur_ind]] = sum_acc[i] / (ep_train)
-            entry[self.cols[cur_ind + 1]] = sum_inter[i] / (ep_train)
+            entry[self.cols[cur_ind]] = sum_acc[i] / (ep_train * iterations)
+            entry[self.cols[cur_ind + 1]] = sum_inter[i] / (ep_train * iterations)
             cur_ind += 2
 
         # aggregate data testing
@@ -71,13 +71,13 @@ class CustomLogger:
 
         # train data
         entry[self.cols[cur_ind]] = ep_test
-        entry[self.cols[cur_ind + 1]] = sum_steps / (ep_test)
-        entry[self.cols[cur_ind + 2]] = sum_coll / (ep_test)
+        entry[self.cols[cur_ind + 1]] = sum_steps / (ep_test * iterations)
+        entry[self.cols[cur_ind + 2]] = sum_coll / (ep_test * iterations)
 
         cur_ind = cur_ind + 3
         for i in range(self.nagents):
-            entry[self.cols[cur_ind]] = sum_acc[i] / (ep_test)
-            entry[self.cols[cur_ind + 1]] = sum_inter[i] / (ep_test)
+            entry[self.cols[cur_ind]] = sum_acc[i] / (ep_test * iterations)
+            entry[self.cols[cur_ind + 1]] = sum_inter[i] / (ep_test * iterations)
             cur_ind += 2
 
         self.df = self.df.append(entry, ignore_index=True)
