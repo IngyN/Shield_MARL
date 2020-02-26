@@ -47,10 +47,10 @@ def plot_v2(data, agents, map='example', test=False, shielding=False, save=True,
     ax04.set_ylim(0, 500)
 
     # set x-limits
-    ax01.set_xlim(0, data['episodes'])
-    ax02.set_xlim(0, data['episodes'])
-    ax03.set_xlim(0, data['episodes'])
-    ax04.set_xlim(0, data['episodes'])
+    ax01.set_xlim(1, data['episodes'])
+    ax02.set_xlim(1, data['episodes'])
+    ax03.set_xlim(1, data['episodes'])
+    ax04.set_xlim(1, data['episodes'])
 
     # Turn on grids
     ax01.grid(True)

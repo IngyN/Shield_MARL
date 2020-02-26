@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
+import datetime
 
 
 # Log results into a data frame
 class CustomLogger:
 
     def __init__(self, nagents):
-        self.cols = ['Shield', '# iterations']
+        self.cols = ['Map', 'Shield', '# iterations']
         self.base = ['ep', 'avg_steps', 'avg_coll']
         self.ext = ['_train', '_test']
 
@@ -21,12 +22,13 @@ class CustomLogger:
         self.df = pd.DataFrame(columns=self.cols)
 
     # construct a row and add it to the data frame
-    def log_results(self, test_data, train_data, shielding, iterations, save=False, display=False):
+    def log_results(self, map, test_data, train_data, shielding, iterations, save=False, display=False):
 
         entry = {}
 
+        entry['Map'] = map
         entry['Shield'] = int(shielding)
-        entry[self.cols[1]] = iterations
+        entry[self.cols[2]] = iterations
         ep_train = train_data[0]['episodes']
         ep_test = test_data[0]['episodes']
 
@@ -44,17 +46,22 @@ class CustomLogger:
                 sum_inter[i] += np.sum(train_data[it]['interferences'][i, :])
 
         # train data
-        entry[self.cols[2]] = ep_train
-        entry[self.cols[3]] = sum_steps / (ep_train)
-        entry[self.cols[4]] = sum_coll / (ep_train)
+        entry[self.cols[3]] = ep_train
+        entry[self.cols[4]] = sum_steps / (ep_train)
+        entry[self.cols[5]] = sum_coll / (ep_train)
 
-        cur_ind = 5
+        cur_ind = 6
         for i in range(self.nagents):
             entry[self.cols[cur_ind]] = sum_acc[i] / (ep_train)
             entry[self.cols[cur_ind + 1]] = sum_inter[i] / (ep_train)
             cur_ind += 2
 
         # aggregate data testing
+        sum_steps = 0
+        sum_coll = 0
+        sum_acc = np.zeros([self.nagents])
+        sum_inter = np.zeros([self.nagents])
+
         for it in range(iterations):
             sum_steps += np.sum(test_data[it]['steps'])
             sum_coll += np.sum(test_data[it]['collisions'])
@@ -77,6 +84,7 @@ class CustomLogger:
 
         print(self.df)
 
-    def save(self):
+    def save(self, alg):
         # save the dataframe to a csv file.
-        pass
+        date_str = datetime.datetime.now().strftime('_%H:%M_%d_%b_%Y')
+        self.df.to_csv(alg + '_' + str(self.nagents) + date_str + '.csv', sep='\t', encoding='utf-8', index=False)

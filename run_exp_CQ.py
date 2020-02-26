@@ -4,10 +4,10 @@ from custom_logger import CustomLogger
 import numpy as np
 
 # map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
-map_names = ['example']
+map_names = ['ISR']
 
 agents = 2
-shielding = False
+shielding = True
 steps_test = 50
 ep_test = 10
 iterations = 1
@@ -55,4 +55,6 @@ for m in map_names:
         cq.reset()
 
     # Log information
-    logger.log_results(test_data, train_data, shielding, iterations)
+    logger.log_results(m, test_data, train_data, shielding, iterations)
+
+logger.save('CQ')
