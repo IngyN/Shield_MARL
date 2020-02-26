@@ -6,7 +6,8 @@ from copy import deepcopy
 from mpl_toolkits.axes_grid1 import host_subplot
 
 def plot_v2(data, agents, map='example', test=False, shielding=False, save=True, display=False):
-    plt.ioff()
+    if display:
+        plt.ioff()
     # Sent for figure
     font = {'size': 10}
     matplotlib.rc('font', **font)

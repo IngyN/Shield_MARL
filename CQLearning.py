@@ -361,15 +361,13 @@ class CQLearning:
                         for idx in idx_values:
                             interference[idx][e] += 1
 
-                if actions[0] == 2 and np.all(pos[0] == [6, 3]):
-                    print('might happen')
-
                 # update environment and retrieve rewards:
                 obs, rew, info, done = self.env.step(actions)  # sample rewards and new states
                 acc_rew[e] += rew
                 collision[e] += info['collisions']
-                print(self.shield.current_state, ' - ', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
-                      '- coll: ', info['collisions'])
+                # if info['collisions'] > 0:
+                #     print(self.shield.current_state, ' - ', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
+                #       '- coll: ', info['collisions'])
 
                 if shielding:  # punish pre_actions that were changed extra.
                     if not np.all(punish == False):
@@ -380,10 +378,6 @@ class CQLearning:
 
                 self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudo-code.
                 self.update(pos, obs, rew, actions)  # update marks and qvalues
-
-                # if debug:  # and s > step_max*0.6:
-                #     print('action:',actions,'- done:', done, '\t- goal_flag:', self.env.goal_flag, '- rewards:', rew,
-                #           '\t- pos:', pos.flatten(), '- obs:', obs.flatten())
 
                 if done:  # if all agents have reached their goal -> episode is finished
                     steps[e] = s
