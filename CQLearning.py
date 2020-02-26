@@ -354,17 +354,22 @@ class CQLearning:
 
                 if shielding:
                     pre_actions = deepcopy(actions)
-                    actions = self.shield.step(actions)
+                    actions = self.shield.step(actions, self.env.goal_flag)
                     punish = (pre_actions != actions)
                     if len(interference[punish]) > 0:
                         idx_values = np.where(punish == True)[0]
                         for idx in idx_values:
                             interference[idx][e] += 1
 
+                if actions[0] == 2 and np.all(pos[0] == [6, 3]):
+                    print('might happen')
+
                 # update environment and retrieve rewards:
                 obs, rew, info, done = self.env.step(actions)  # sample rewards and new states
                 acc_rew[e] += rew
                 collision[e] += info['collisions']
+                print(self.shield.current_state, ' - ', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
+                      '- coll: ', info['collisions'])
 
                 if shielding:  # punish pre_actions that were changed extra.
                     if not np.all(punish == False):

@@ -43,7 +43,7 @@ class Shield:
         return found
 
     #  use actions and current shield state to determine if action is dangerous.
-    def step(self, act):
+    def step(self, act, goal_flag):
         actions = np.zeros([self.nagents], dtype=int)
         successors = np.array(self.shield_json[str(self.current_state)]['Successors'])
 
@@ -52,7 +52,10 @@ class Shield:
             condition = np.zeros(self.nagents)
             for i in range(self.nagents):
                 a_str = 'a' + str(i)
-                condition[i] = 1 if (cur[a_str] == act[i]) else 0
+                if goal_flag[i] == 1:
+                    condition[i] = 1 if (cur[a_str] == 0) else 0
+                else:
+                    condition[i] = 1 if (cur[a_str] == act[i]) else 0
 
             if np.all(condition):  # found the correct successor
                 for i in range(self.nagents):
