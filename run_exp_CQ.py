@@ -57,4 +57,5 @@ for m in map_names:
     # Log information
     logger.log_results(m, test_data, train_data, shielding, iterations)
 
+print(logger.df)
 logger.save('CQ')

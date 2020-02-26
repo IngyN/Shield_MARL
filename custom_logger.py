@@ -82,9 +82,10 @@ class CustomLogger:
 
         self.df = self.df.append(entry, ignore_index=True)
 
-        print(self.df)
+        # print(self.df)
 
     def save(self, alg):
         # save the dataframe to a csv file.
         date_str = datetime.datetime.now().strftime('_%H:%M_%d_%b_%Y')
-        self.df.to_csv(alg + '_' + str(self.nagents) + date_str + '.csv', sep='\t', encoding='utf-8', index=False)
+        self.df.to_csv('logs/' + alg + '_' + str(self.nagents) + date_str + '.csv', sep='\t', encoding='utf-8',
+                       index=False)

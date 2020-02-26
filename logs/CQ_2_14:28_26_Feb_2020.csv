@@ -1,0 +1,2 @@
+Map	Shield	# iterations	ep_train	avg_steps_train	avg_coll_train	avg_acc_0_train	avg_inter_0_train	avg_acc_1_train	avg_inter_1_train	ep_test	avg_steps_test	avg_coll_test	avg_acc_0_test	avg_inter_0_test	avg_acc_1_test	avg_inter_1_test
+ISR	1	1	100	83.83	1.06	-131.05	0.66	-285.57	4.64	10	15.1	0.0	-14.6	0.1	-23.4	0.4
