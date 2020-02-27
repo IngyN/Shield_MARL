@@ -99,7 +99,7 @@ def plot_v2(data, agents, map='example', test=False, shielding=False, save=True,
         ax04.legend(inter_plots, inter_labels)
 
     plt.subplots_adjust(left=0.12, right=0.9, wspace=0.33, hspace=0.31)
-    shield_txt = ['', '_shield_']
+    shield_txt = ['', 'shield_']
     if save:
         if not test:
             f1.savefig('figures/4_cq_' + shield_txt[int(shielding)] + map + '_' + str(agents) + '_train.png',
@@ -110,3 +110,5 @@ def plot_v2(data, agents, map='example', test=False, shielding=False, save=True,
 
     if display:
         plt.show()
+    else:
+        plt.close()
