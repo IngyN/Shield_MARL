@@ -139,7 +139,7 @@ class CustomLogger:
 
     def save(self, alg):
         # save the dataframe to a csv file.
-        date_str = datetime.datetime.now().strftime('_%H:%M_%d_%b_%Y')
+        date_str = datetime.datetime.now().strftime('_%H_%M_%d_%b_%Y')
         self.df.to_csv('logs/summary_' + alg + '_' + str(self.nagents) + date_str + '.csv', sep='\t', encoding='utf-8',
                        index=False)
 
