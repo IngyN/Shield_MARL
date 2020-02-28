@@ -14,7 +14,7 @@ def plot_v2(data, agents, map='example', test=False, shielding=False, save=True,
 
     # Setup figure and subplots
     if not test:
-        f1 = plt.figure(num=1, figsize=(9, 12))  # , dpi = 300)
+        f1 = plt.figure(num=1, figsize=(9, 12), dpi=300)
         f1.set_figheight(9)
         f1.set_figwidth(12)
         f1.canvas.set_window_title('Train')

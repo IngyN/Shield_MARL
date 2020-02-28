@@ -32,7 +32,7 @@ for m in map_names:
     cq = CQLearning(map_name=m, nagents=agents)
     i_step_max, i_episode_max, step_max, episode_max = cq.get_recommended_training_vars()
     i_episode_max = 100
-    episode_max = 100
+    episode_max = 50
     train_data = []
     test_data = []
 
@@ -58,4 +58,5 @@ for m in map_names:
     logger.log_results(m, test_data, train_data, shielding, iterations)
 
 print(logger.df)
+print(logger.raw_df)
 logger.save('CQ')
