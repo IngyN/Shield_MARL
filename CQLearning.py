@@ -8,7 +8,6 @@ from scipy import stats
 import random, time
 import matplotlib
 import matplotlib.pyplot as plt
-from plotting import plot_v2
 
 
 class CQLearning:
