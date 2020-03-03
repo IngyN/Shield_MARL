@@ -14,7 +14,7 @@ gast==0.3.2
 glfw==1.8.7
 grpcio==1.26.0
 gym==0.10.8
--e git+https://github.com/IngyN/gym-grid-ma.git@a5679080b10e7d719091ea4fe623da160349e619#egg=gym_grid_ma
+#-e git+https://github.com/IngyN/gym-grid-ma.git@a5679080b10e7d719091ea4fe623da160349e619#egg=gym_grid_ma
 html5lib==0.9999999
 idna==2.8
 imageio==2.6.1

@@ -1,18 +1,17 @@
 from CQLearning import CQLearning
 from plotting import plot_v2
+from parsing import get_options
 from custom_logger import CustomLogger
 import numpy as np
+
 
 # map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
 map_names = ['ISR']
 
-agents = 2
-shielding = True
+agents, shielding, iterations, display, save = get_options()
 steps_test = 50
 ep_test = 10
-iterations = 1
-display = True
-save = True
+
 logger = CustomLogger(agents)
 
 
