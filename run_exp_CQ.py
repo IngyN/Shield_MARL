@@ -41,12 +41,14 @@ for m in map_names:
         s, acc, coll, inter = cq.run(step_max=step_max, episode_max=episode_max,
                                      debug=False, shielding=shielding)
         train_data_i = format_data(s, acc, coll, inter, episode_max)
-        plot_v2(train_data_i, agents=agents, map=m, test=False, shielding=shielding, save=save, display=False)
+        plot_v2(train_data_i, agents=agents, iteration=i + 1, map=m, test=False, shielding=shielding, save=save,
+                display=False)
 
         s2, acc2, coll2, inter2 = cq.run(step_max=steps_test, episode_max=ep_test,
                                          testing=True, debug=True, shielding=shielding)
         test_data_i = format_data(s2, acc2, coll2, inter2, ep_test)
-        plot_v2(test_data_i, agents=agents, map=m, test=True, shielding=shielding, save=save, display=display)
+        plot_v2(test_data_i, agents=agents, iteration=i + 1, map=m, test=True, shielding=shielding, save=save,
+                display=display)
 
         train_data.append(train_data_i)
         test_data.append(test_data_i)
