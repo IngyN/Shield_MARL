@@ -6,10 +6,10 @@ import numpy as np
 
 
 # map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
-map_names = ['ISR']
+map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
 
 agents, shielding, iterations, display, save = get_options()
-steps_test = 50
+steps_test = 100
 ep_test = 10
 
 logger = CustomLogger(agents)
@@ -30,8 +30,7 @@ def format_data(steps, acc, coll, inter, ep):
 for m in map_names:
     cq = CQLearning(map_name=m, nagents=agents)
     i_step_max, i_episode_max, step_max, episode_max = cq.get_recommended_training_vars()
-    i_episode_max = 100
-    episode_max = 50
+
     train_data = []
     test_data = []
 
@@ -58,6 +57,6 @@ for m in map_names:
     # Log information
     logger.log_results(m, test_data, train_data, shielding, iterations)
 
-print(logger.df)
-print(logger.raw_df)
+# print(logger.df)
+# print(logger.raw_df)
 logger.save('CQ')

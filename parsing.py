@@ -9,9 +9,9 @@ def get_options(debug=False):
     )
 
     agents = 2
-    shielding = True
-    iterations = 1
-    display = True
+    shielding = False
+    iterations = 10
+    display = False
     save = True
 
     for opt, arg in opts:

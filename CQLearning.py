@@ -378,13 +378,13 @@ class CQLearning:
                 self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudo-code.
                 self.update(pos, obs, rew, actions)  # update marks and qvalues
 
-                if done:  # if all agents have reached their goal -> episode is finished
+                if np.all(done):  # if all agents have reached their goal -> episode is finished
                     steps[e] = s
                     if debug:
                         self.env.render(episode=e + 1, speed=1)
                     break
 
-            if not done:  # if episode terminated without agents reaching their goals
+            if not np.all(done):  # if episode terminated without agents reaching their goals
                 steps[e] = step_max - 1
 
         return steps + 1, acc_rew, collision, interference

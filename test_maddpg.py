@@ -16,16 +16,16 @@ def parse_args():
     # Environment
     parser.add_argument("--map", type=str, default="example", help="name of the map")
     parser.add_argument("--max-episode-len", type=int, default=500, help="maximum episode length")
-    parser.add_argument("--num-episodes", type=int, default=250, help="number of episodes")
+    parser.add_argument("--num-episodes", type=int, default=400, help="number of episodes")
     parser.add_argument("--nagents", type=int, default=2, help="number of agents")
     parser.add_argument("--good-policy", type=str, default="maddpg", help="policy for good agents")
     parser.add_argument("--adv-policy", type=str, default="maddpg", help="policy of adversaries")
     # Core training parameters
-    parser.add_argument("--lr", type=float, default=1e-2, help="learning rate for Adam optimizer")
-    parser.add_argument("--gamma", type=float, default=0.95, help="discount factor")
-    parser.add_argument("--batch-size", type=int, default=64,
+    parser.add_argument("--lr", type=float, default=1e-4, help="learning rate for Adam optimizer")
+    parser.add_argument("--gamma", type=float, default=0.9, help="discount factor")
+    parser.add_argument("--batch-size", type=int, default=128,
                         help="number of episodes to optimize at the same time")  # recommended = 1024
-    parser.add_argument("--num-units", type=int, default=32, help="number of units in the mlp")
+    parser.add_argument("--num-units", type=int, default=8, help="number of units in the mlp")
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="/tmp/policy/",
@@ -37,6 +37,7 @@ def parse_args():
     # Evaluation
     parser.add_argument("--restore", action="store_true", default=False)
     parser.add_argument("--display", action="store_true", default=False)
+    parser.add_argument("--test", action="store_true", default=False)
     # parser.add_argument("--benchmark", action="store_true", default=False)
     # parser.add_argument("--benchmark-iters", type=int, default=100000, help="number of iterations run for benchmarking")
     # parser.add_argument("--benchmark-dir", type=str, default="./benchmark_files/", help="directory where benchmark data is saved")
@@ -118,22 +119,23 @@ def train(arglist):
             # TODO add an extra experience here for shield. save new actions as [0, 0, 1, 0, 0] for 2
             # collect experience
             for i, agent in enumerate(trainers):
-                agent.experience(obs_n[i], action_n[i], rew_n[i], new_obs_n[i], done_n, terminal)
+                agent.experience(obs_n[i], action_n[i], rew_n[i], new_obs_n[i], done_n[i], terminal)
             obs_n = new_obs_n
 
             for i, rew in enumerate(rew_n):
                 episode_rewards[-1] += rew
                 agent_rewards[i][-1] += rew
 
-            if done_n or terminal:
+            if np.all(done_n) or terminal:
                 obs_n = env.reset()
                 # print('Episode step :', episode_step)
-                steps[len(episode_rewards)] = episode_step
-                episode_step = 0
                 episode_rewards.append(0)
+                steps[len(episode_rewards) - 2] = episode_step
+                episode_step = 0
                 for a in agent_rewards:
                     a.append(0)
                 agent_info.append([[]])
+                terminal = True
 
             # increment global step counter
             train_step += 1
@@ -157,19 +159,21 @@ def train(arglist):
                 continue
 
             # update all trainers, if not in display or benchmark mode
-            loss = None
-            for agent in trainers:
-                agent.preupdate()
-            for agent in trainers:
-                loss = agent.update(trainers, train_step)
+            if not arglist.test:
+                loss = None
+                for agent in trainers:
+                    agent.preupdate()
+                for agent in trainers:
+                    loss = agent.update(trainers, train_step)
 
             # save model, display training output
-            if terminal and (len(episode_rewards) % 15 == 0):
+            debug_rate = 50
+            if terminal and (len(episode_rewards) % debug_rate == 0):
                 U.save_state(arglist.save_dir, saver=saver)
                 # print statement depends on whether or not there are adversaries
                 if num_adversaries == 0:
                     print("steps: {}, episodes: {}, mean episode reward: {}, time: {}".format(
-                        train_step, len(episode_rewards), np.mean(episode_rewards[-arglist.save_rate:]),
+                        train_step, len(episode_rewards), np.mean(episode_rewards[-debug_rate:]),
                         round(time.time() - t_start, 3)))
                 else:
                     print("steps: {}, episodes: {}, mean episode reward: {}, agent episode reward: {}, time: {}".format(

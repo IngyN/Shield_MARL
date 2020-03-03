@@ -44,8 +44,8 @@ def plot_v2(data, agents, map='example', iteration=1, test=False, shielding=Fals
     else:
         ax01.set_ylim(0, 200)
     ax02.set_ylim(-2000, 500)
-    ax03.set_ylim(0, 500)
-    ax04.set_ylim(0, 500)
+    ax03.set_ylim(0, 200)
+    ax04.set_ylim(0, 200)
 
     # set x-limits
     ax01.set_xlim(1, data['episodes'])
@@ -100,13 +100,14 @@ def plot_v2(data, agents, map='example', iteration=1, test=False, shielding=Fals
 
     plt.subplots_adjust(left=0.12, right=0.9, wspace=0.33, hspace=0.31)
     shield_txt = ['', 'shield_']
+    dir_loc = 'figures/' + map + '/4_cq_'
     if save:
         if not test:
-            f1.savefig('figures/4_cq_' + shield_txt[int(shielding)] + map + '_' + str(agents) + '_train_' + str(
+            f1.savefig(dir_loc + shield_txt[int(shielding)] + map + '_' + str(agents) + '_train_' + str(
                 iteration) + '.png',
                        bbox_inches='tight')
         else:
-            f1.savefig('figures/4_cq_' + shield_txt[int(shielding)] + map + '_' + str(agents) + '_test_' + str(
+            f1.savefig(dir_loc + shield_txt[int(shielding)] + map + '_' + str(agents) + '_test_' + str(
                 iteration) + '.png',
                        bbox_inches='tight')
 
