@@ -11,6 +11,8 @@ import tensorflow.contrib.layers as layers
 from Shield import Shield
 from copy import deepcopy
 from multiagent.environment import MultiAgentEnv
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 def parse_args():
@@ -27,7 +29,7 @@ def parse_args():
     parser.add_argument("--gamma", type=float, default=0.9, help="discount factor")
     parser.add_argument("--batch-size", type=int, default=128,
                         help="number of episodes to optimize at the same time")  # recommended = 1024
-    parser.add_argument("--num-units", type=int, default=8, help="number of units in the mlp")
+    parser.add_argument("--num-units", type=int, default=3, help="number of units in the mlp")
     parser.add_argument("--shield", action="store_true", default=False)
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
@@ -82,6 +84,15 @@ def load_shield(map, env):
     return shield
 
 
+def plot(steps):
+    plt.ioff()
+    plt.figure(2)
+    plt.plot(np.arange(1, len(steps) + 1), steps)
+    # fig.savefig('test.png', bbox_inches='tight')
+    plt.title('Training steps')
+    plt.show()
+
+
 def train(arglist):
     with U.single_threaded_session():
         # Create environment
@@ -113,6 +124,7 @@ def train(arglist):
         episode_step = 0
         train_step = 0
         t_start = time.time()
+        print('num_units :', arglist.num_units)
 
         if arglist.shield:
             pre_actions = np.zeros([env.nagents])
@@ -162,7 +174,8 @@ def train(arglist):
 
             if np.all(done_n) or terminal:
                 obs_n = env.reset()
-                shield.reset()
+                if arglist.shield:
+                    shield.reset()
                 # print('Episode step :', episode_step)
                 episode_rewards.append(0)
                 steps[len(episode_rewards) - 2] = episode_step
@@ -228,8 +241,10 @@ def train(arglist):
                 # agrew_file_name = arglist.plots_dir + arglist.exp_name + '_agrewards.pkl'
                 # with open(agrew_file_name, 'wb') as fp:
                 #     pickle.dump(final_ep_ag_rewards, fp)
-                print('...Finished total of {} episodes.'.format(len(episode_rewards)))
-                print(steps)
+                print('...Finished total of {} episodes, Mean rew/ep = {}.'.format(len(episode_rewards),
+                                                                                   np.mean(episode_rewards)))
+                print(steps[:-1])
+                plot(steps[:-1])
                 break
 
 
