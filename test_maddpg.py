@@ -8,6 +8,8 @@ import maddpg.common.tf_util as U
 from maddpg.trainer.maddpg import MADDPGAgentTrainer
 import tensorflow.contrib.layers as layers
 
+from Shield import Shield
+from copy import deepcopy
 from multiagent.environment import MultiAgentEnv
 
 
@@ -26,6 +28,7 @@ def parse_args():
     parser.add_argument("--batch-size", type=int, default=128,
                         help="number of episodes to optimize at the same time")  # recommended = 1024
     parser.add_argument("--num-units", type=int, default=8, help="number of units in the mlp")
+    parser.add_argument("--shield", action="store_true", default=False)
     # Checkpointing
     parser.add_argument("--exp-name", type=str, default=None, help="name of the experiment")
     parser.add_argument("--save-dir", type=str, default="/tmp/policy/",
@@ -73,6 +76,12 @@ def get_trainers(env, obs_shape_n, arglist):
     return trainers
 
 
+def load_shield(map, env):
+    dir = 'shields/collision_' + map + '_opt.shield'
+    shield = Shield(env.nagents, start=env.start_pos, file=dir)
+    return shield
+
+
 def train(arglist):
     with U.single_threaded_session():
         # Create environment
@@ -105,21 +114,46 @@ def train(arglist):
         train_step = 0
         t_start = time.time()
 
+        if arglist.shield:
+            pre_actions = np.zeros([env.nagents])
+            shield = load_shield(arglist.map, env)
+            shield.reset()
+
         print('Starting iterations...')
         while True:
             # get action
             action_n = [agent.action(obs) for agent, obs in zip(trainers, obs_n)]
             actions = [np.argmax(action_n[i]) for i in range(env.nagents)]
-            # TODO: add shield check here
+
+            if arglist.shield:  # shield check.
+                pre_actions = deepcopy(actions)
+                actions = shield.step(actions, env.goal_flag)
+                punish = (pre_actions != actions)
+                # if len(interference[punish]) > 0:
+                #     idx_values = np.where(punish == True)[0]
+                #     for idx in idx_values:
+                #         interference[idx][e] += 1
+
             # environment step
             new_obs_n, rew_n, info_n, done_n = env.step(actions)
 
             episode_step += 1
             terminal = (episode_step >= arglist.max_episode_len)
             # TODO add an extra experience here for shield. save new actions as [0, 0, 1, 0, 0] for 2
+            if arglist.shield:  # punish pre_actions that were changed extra.
+                if not np.all(punish == False):
+                    rew_shield = deepcopy(rew_n)
+                    rew_shield[punish] = -10
+                    action_bin = np.zeros([env.nagents, len(action_n[0])])
+                    for i, agent in enumerate(trainers):
+                        action_bin[i][actions[i]] = 1
+                        # TODO : shoudl new_obs_n be changed?
+                        agent.experience(obs_n[i], action_bin[i], rew_shield[i], new_obs_n[i], done_n[i], terminal)
+
             # collect experience
             for i, agent in enumerate(trainers):
                 agent.experience(obs_n[i], action_n[i], rew_n[i], new_obs_n[i], done_n[i], terminal)
+
             obs_n = new_obs_n
 
             for i, rew in enumerate(rew_n):
@@ -128,6 +162,7 @@ def train(arglist):
 
             if np.all(done_n) or terminal:
                 obs_n = env.reset()
+                shield.reset()
                 # print('Episode step :', episode_step)
                 episode_rewards.append(0)
                 steps[len(episode_rewards) - 2] = episode_step

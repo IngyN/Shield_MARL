@@ -44,7 +44,7 @@ for m in map_names:
                 display=False)
 
         s2, acc2, coll2, inter2 = cq.run(step_max=steps_test, episode_max=ep_test,
-                                         testing=True, debug=True, shielding=shielding)
+                                         testing=True, debug=display, shielding=shielding)
         test_data_i = format_data(s2, acc2, coll2, inter2, ep_test)
         plot_v2(test_data_i, agents=agents, iteration=i + 1, map=m, test=True, shielding=shielding, save=save,
                 display=display)
@@ -59,4 +59,4 @@ for m in map_names:
 
 # print(logger.df)
 # print(logger.raw_df)
-logger.save('CQ')
+logger.save('CQ+shield')
