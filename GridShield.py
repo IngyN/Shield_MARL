@@ -2,15 +2,31 @@ import json
 import numpy as np
 
 
-class Shield:
-    # Centralized shield version
-    def __init__(self, nagents=2, start=np.array([[7, 0], [6, 3]]), file='shields/collision_ISR_opt.shield'):
+class GridShield:
+    # Composed shield version
+    def __init__(self, env, nagents=2, start=np.array([[7, 0], [6, 3]]), file='example/example_2_agents_'):
         self.current_state = 0
         self.nagents = nagents
+        base = 'shields/grid_shields/'
+        res = [3, 3]
 
-        f = open(file)
-        self.shield_json = json.load(f)
+        smap = np.zeros([env.nrows, env.ncols])
+        for i in range(env.nrows):
+            for j in range(env.ncols):
+                # 1 based shield number
+                shieldnum = int((i / res[0])) * int(env.ncols / (res[1])) + int(j / res[0]) + 1
+                smap[i][j] = shieldnum
 
+        self.nshields = int(np.max(smap))
+        self.shield_json = []
+
+        # loading Shields.
+        for sh in range(self.nshields):
+            f = open(base + file + str(sh))
+            self.shield_json.append(json.load(f))
+            f.close()
+
+        # TODO update this.
         found = self._find_start_state(start)
         if found:
             self.current_state = self.start_state
@@ -18,8 +34,6 @@ class Shield:
         else:
             print('Error finding start state!!! ')
             exit(1)
-
-        f.close()
 
     # search shield to find right start state based on agent start states
     def _find_start_state(self, start):
@@ -43,6 +57,7 @@ class Shield:
         return found
 
     #  use actions and current shield state to determine if action is dangerous.
+    # tODO decide if step on one or more shields.
     def step(self, act, goal_flag):
         actions = np.zeros([self.nagents], dtype=int)
         successors = np.array(self.shield_json[str(self.current_state)]['Successors'])

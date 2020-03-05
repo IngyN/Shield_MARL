@@ -131,10 +131,11 @@ def train(arglist):
             shield = load_shield(arglist.map, env)
             shield.reset()
 
-        print('Starting iterations...')
+        print('Starting training...')
         while True:
             # get action
             action_n = [agent.action(obs) for agent, obs in zip(trainers, obs_n)]
+            # print(action_n.flatten())
             actions = [np.argmax(action_n[i]) for i in range(env.nagents)]
 
             if arglist.shield:  # shield check.

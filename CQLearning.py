@@ -389,6 +389,87 @@ class CQLearning:
 
         return steps + 1, acc_rew, collision, interference
 
+    # algorithm with grid support
+    def run_grid(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False):
+
+        alpha_index = 1
+        self.discount = discount
+        start_ep = 0.85
+        actions = np.zeros([self.nagents], dtype=int)
+
+        # Evaluation metrics
+        steps = np.zeros([episode_max], dtype=int)
+        acc_rew = np.zeros([episode_max, self.nagents])
+        collision = np.zeros([episode_max])
+        interference = np.zeros([self.nagents, episode_max])
+
+        if shielding:
+            pre_actions = np.zeros([self.nagents], dtype=int)
+            self.load_shield()
+
+        for e in range(episode_max):  # loop over episodes
+            self.env.reset()
+            if shielding:
+                self.shield.reset()
+            # self.reset_W()
+            done = False
+
+            if debug:
+                print('episode : ', e + 1)
+
+            for s in range(step_max):  # loop over steps
+
+                self.alpha = alpha_index / (0.1 * s + 0.5)
+                # ep = 1 / (0.6 * e + 3) + 0.1
+                ep = start_ep - e * 0.0002 if e > episode_max * 0.87 else start_ep
+                pos = deepcopy(self.env.pos)  # update pos based in the environment
+
+                if debug:
+                    self.env.render(episode=e + 1, speed=1)
+
+                for a in range(self.nagents):  # greedy select an action
+                    if not testing:
+                        actions[a] = self.action_selection(pos, a, epsilon=ep)  # select actions for each agent
+                    else:
+                        actions[a] = self.action_selection(pos, a, epsilon=0.05)
+
+                if shielding:
+                    pre_actions = deepcopy(actions)
+                    actions = self.shield.step(actions, self.env.goal_flag)
+                    punish = (pre_actions != actions)
+                    if len(interference[punish]) > 0:
+                        idx_values = np.where(punish == True)[0]
+                        for idx in idx_values:
+                            interference[idx][e] += 1
+
+                # update environment and retrieve rewards:
+                obs, rew, info, done = self.env.step(actions)  # sample rewards and new states
+                acc_rew[e] += rew
+                collision[e] += info['collisions']
+                # if info['collisions'] > 0:
+                #     print(self.shield.current_state, ' - ', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
+                #       '- coll: ', info['collisions'])
+
+                if shielding:  # punish pre_actions that were changed extra.
+                    if not np.all(punish == False):
+                        rew_shield = deepcopy(rew)
+                        rew_shield[punish] = -10
+                        self.update_W(pos, pre_actions, rew_shield)
+                        self.update(pos, obs, rew_shield, pre_actions)
+
+                self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudo-code.
+                self.update(pos, obs, rew, actions)  # update marks and qvalues
+
+                if np.all(done):  # if all agents have reached their goal -> episode is finished
+                    steps[e] = s
+                    if debug:
+                        self.env.render(episode=e + 1, speed=1)
+                    break
+
+            if not np.all(done):  # if episode terminated without agents reaching their goals
+                steps[e] = step_max - 1
+
+        return steps + 1, acc_rew, collision, interference
 
 def full_test(cq, shielding=False):
     ep_train = 500
