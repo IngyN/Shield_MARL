@@ -304,7 +304,7 @@ class CQLearning:
         return i_step_max, i_episode_max, step_max, episode_max
 
     def load_shield(self):
-        dir = 'shields/collision_' + self.map_name + '_opt.shield'
+        dir = 'shields/collision_' + self.map_name + '_' + str(self.nagents) + '_agents.shield'
         self.shield = Shield(self.nagents, start=self.start, file=dir)
 
     # non shielded running of the algorithm
