@@ -61,7 +61,7 @@ class Shield:
                 for i in range(self.nagents):
                     s_str = 'shield' + str(i)
                     actions[i] = cur[s_str]
-                    self.current_state = s
+                self.current_state = s
                 break
 
         return actions

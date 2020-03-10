@@ -76,8 +76,9 @@ class GridShield:
     #  use actions and current shield state to determine if action is dangerous.
     # Step -> all shields, assumption : both agents cannot have already been in the shield and both have the same idx
     # TODO be careful with which agent is 0 and which is 1.
+    # tODO : add a_req calculations
     def step(self, actions, pos, goal_flag, env):
-        act = deepcopy(actions)
+        act = np.zeros([self.nagents], dtype=int)
         shield_pos = np.zeros([self.nagents])
         # update which agents are in which shields
         for i in range(self.nagents):
@@ -121,31 +122,51 @@ class GridShield:
                     a0 = ag_sh[r]
                     a1 = ag_sh[1 - r]
 
-                act[ag_sh] = self.step_one(sh, actions[ag_sh], goal_flag[ag_sh], agent0=a0, agent1=a1)
+                act[ag_sh] = self.step_one(sh, goal_flag[ag_sh], agent0=a0, agent1=a1)
+        # act says which ones need to be changed
+        actions[not act] = 0  # blocked = 0
+        return actions
 
-        return act
+    def get_arr_idx(self, agent0=None, agent1=None):
+        idx = []
+        if agent0 is None or agent1 is None:
+            idx = [0]
+        elif agent1 is not None and agent0 is not None:
+            if agent0 > agent1:
+                idx = [1, 0]
+            else:
+                idx = [0, 1]  # agent0 < agent1
+        return idx
 
     # TODO update to work for 1 shield
     # + update self.agent_pos
-    def step_one(self, sh, act, goal_flag, agent0=None, agent1=None):
-        actions = np.zeros([self.nagents], dtype=int)
+    def step_one(self, sh, goal_flag, a_req, a_states, agent0=None, agent1=None):
+
+        idx = self.get_arr_idx(agent0=agent0, agent1=agent1)
+
+        act = np.zeros([len(goal_flag)], dtype=int)
         successors = np.array(self.shield_json[sh][str(self.current_state)]['Successors'])
 
         for s in successors:
             cur = self.shield_json[sh][str(s)]['State']
-            condition = np.zeros(self.nagents)
-            for i in range(self.nagents):
+            condition = np.zeros(len(goal_flag))
+
+            for i in range(len(goal_flag)):
                 a_str = 'a' + str(i)
-                if goal_flag[i] == 1:
-                    condition[i] = 1 if (cur[a_str] == 0) else 0
+                a_req_str = 'a_req' + str(i)
+
+                if goal_flag[idx[i]] == 1:
+                    condition[i] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_states[idx[i]])
                 else:
-                    condition[i] = 1 if (cur[a_str] == act[i]) else 0
+                    condition[i] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_req[idx[i]])
 
             if np.all(condition):  # found the correct successor
                 for i in range(self.nagents):
-                    s_str = 'shield' + str(i)
-                    actions[i] = cur[s_str]
-                    self.current_state = s
+                    s_str = 'a_shield' + str(i)
+                    act[idx[i]] = cur[s_str]
+                self.agent_pos[agent0] = [0, sh]
+                self.agent_pos[agent1] = [1, sh]
+                self.current_state[sh] = s
                 break
 
         return actions
@@ -157,7 +178,7 @@ class GridShield:
 
 # for testing
 if __name__ == "__main__":
-    shield = Shield()
+    shield = GridShield()
     actions = np.array([4, 3])
     sactions = shield.step(actions)
     print('Start actions:', actions, 'Shield actions:', sactions)
