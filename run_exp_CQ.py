@@ -1,7 +1,7 @@
 from CQLearning import CQLearning
 from plotting import plot_v2
 from parsing import get_options
-from custom_logger import CustomLogger
+from CustomLogger import CustomLogger
 import numpy as np
 
 

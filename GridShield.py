@@ -74,7 +74,7 @@ class GridShield:
         return found
 
     #  use actions and current shield state to determine if action is dangerous.
-    # Step -> all shields
+    # Step -> all shields, assumption : both agents cannot have already been in the shield and both have the same idx
     # TODO be careful with which agent is 0 and which is 1.
     def step(self, actions, pos, goal_flag, env):
         act = deepcopy(actions)
@@ -126,12 +126,13 @@ class GridShield:
         return act
 
     # TODO update to work for 1 shield
+    # + update self.agent_pos
     def step_one(self, sh, act, goal_flag, agent0=None, agent1=None):
         actions = np.zeros([self.nagents], dtype=int)
         successors = np.array(self.shield_json[sh][str(self.current_state)]['Successors'])
 
         for s in successors:
-            cur = self.shield_json[str(s)]['State']
+            cur = self.shield_json[sh][str(s)]['State']
             condition = np.zeros(self.nagents)
             for i in range(self.nagents):
                 a_str = 'a' + str(i)

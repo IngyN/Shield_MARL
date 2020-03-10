@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 from copy import deepcopy
 
+
 # Log results into a data frame
 class CustomLogger:
 
