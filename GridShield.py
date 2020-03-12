@@ -73,32 +73,72 @@ class GridShield:
 
         return found
 
+    # Transform 2d coordinate to inner shield state.
+    def _to_state(self, pos):
+        sh = self.smap[pos[0]][pos[1]]
+        corner = np.array([(int(sh / self.res[0])) * self.res[0], (sh % self.res[1]) * self.res[1]])
+        in_shield_pos = pos - corner
+
+        state = self.states[in_shield_pos[0]][in_shield_pos[1]]
+
+        return state
+
     #  use actions and current shield state to determine if action is dangerous.
     # Step -> all shields, assumption : both agents cannot have already been in the shield and both have the same idx
+    # Assumption : when 2 in shield and 1 entering -> wait one turn until on agent leaves.
     # TODO be careful with which agent is 0 and which is 1.
     # tODO : add a_req calculations
     def step(self, actions, pos, goal_flag, env):
-        act = np.zeros([self.nagents], dtype=int)
-        shield_pos = np.zeros([self.nagents])
+        act = np.ones([self.nagents])
+        a_states = np.zeros([self.nagents], dtype=int)
+        a_req = np.ones([self.nagents, 2], dtype=int) * -1
+        pos_shield = np.zeros([self.nagents])
+        desired_shield = np.zeros([self.nagents])
+        desired = np.zeros([self.nagents, 2])
+
         # update which agents are in which shields
         for i in range(self.nagents):
-            shield_pos[i] = self.smap[pos[i][0]][pos[i][1]]
+            desired[i] = env.get_next_state(pos[i], actions[i], goal_flag[i])
+            pos_shield[i] = self.smap[pos[i][0]][pos[i][1]]
+            if not goal_flag[i]:
+                desired_shield[i] = self.smap[desired[i][0]][desired[i][1]]
+            else:
+                desired_shield[i] = pos_shield[i]
+            a_states[i] = self._to_state(pos[i])
+            a_req[i][0] = self._to_state(desired[i])
+            if pos_shield[i] != desired_shield[i]:  # Exiting /entering
+                a_req[i][1] = 9
+            else:
+                a_req[i][1] = -1
 
+        # Loop over shields
         for sh in range(self.nshields):
-            ag_sh = np.where(shield_pos == sh)[0]  # which agents are in shield sh
+            ag_sh = np.where(pos_shield == sh)[0]  # which agents are in shield sh
+            des_sh = np.where(desired_shield == sh)[0]
+            des_sh = np.setdiff1d(des_sh, ag_sh)  # only in desired (not already in these shields)
+            ex_sh = []  # agents exiting
 
+            # find exiting agents
+            for a in ag_sh:
+                if desired_shield[a] != sh and a_req[a][1] == 9:
+                    ex_sh.append(a)
+
+            # TODO fix exiting and entering
             if len(ag_sh) > self.max_per_shield:
                 print('Error too many agents in shield : ', sh)
 
-            elif len(ag_sh) == 1:  # there are agents for this shield
+            elif len(ag_sh) == 1:  # there is one agent for this shield -> can accept new
                 if self.agent_pos[ag_sh[0]][0] == 0 and self.agent_pos[ag_sh[0]][1] == sh:
-                    act[ag_sh[0]] = self.step_one(sh, actions[ag_sh[0]], goal_flag[ag_sh[0]], agent0=ag_sh[0])
+                    temp = self.step_one(sh, goal_flag[ag_sh[0]], agent0=ag_sh[0])
                 elif self.agent_pos[ag_sh[0]][0] == 1 and self.agent_pos[ag_sh[0]][1] == sh:
-                    act[ag_sh[0]] = self.step_one(sh, actions[ag_sh[0]], goal_flag[ag_sh[0]], agent1=ag_sh[0])
+                    temp = self.step_one(sh, goal_flag[ag_sh[0]], agent1=ag_sh[0])
                 else:  # it's a new shield
-                    act[ag_sh[0]] = self.step_one(sh, actions[ag_sh[0]], goal_flag[ag_sh[0]], agent0=ag_sh[0])
+                    temp = self.step_one(sh, goal_flag[ag_sh[0]], agent0=ag_sh[0])
+                act[ag_sh[0]] = act[ag_sh[0]] and temp
 
-            elif len(ag_sh) == 2:
+            elif len(ag_sh) == 2:  # no more space
+                for a in des_sh:
+
                 a0 = None
                 a1 = None
                 if self.agent_pos[ag_sh[0]][1] == sh:
@@ -122,7 +162,9 @@ class GridShield:
                     a0 = ag_sh[r]
                     a1 = ag_sh[1 - r]
 
-                act[ag_sh] = self.step_one(sh, goal_flag[ag_sh], agent0=a0, agent1=a1)
+                temp = self.step_one(sh, goal_flag[ag_sh], agent0=a0, agent1=a1)
+                act[ag_sh] = act[ag_sh] and temp
+
         # act says which ones need to be changed
         actions[not act] = 0  # blocked = 0
         return actions
@@ -138,7 +180,7 @@ class GridShield:
                 idx = [0, 1]  # agent0 < agent1
         return idx
 
-    # TODO update to work for 1 shield
+    # TODO update to work for 1 shield + update when exiting
     # + update self.agent_pos
     def step_one(self, sh, goal_flag, a_req, a_states, agent0=None, agent1=None):
 
@@ -164,12 +206,14 @@ class GridShield:
                 for i in range(self.nagents):
                     s_str = 'a_shield' + str(i)
                     act[idx[i]] = cur[s_str]
-                self.agent_pos[agent0] = [0, sh]
+
+                if cur['a_req' + str(agent0)] == 9:
+                    self.agent_pos[agent0] = [0, sh]
                 self.agent_pos[agent1] = [1, sh]
                 self.current_state[sh] = s
                 break
 
-        return actions
+        return act
 
     def reset(self):
         # reset to start state.
