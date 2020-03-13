@@ -127,43 +127,81 @@ class GridShield:
             if len(ag_sh) > self.max_per_shield:
                 print('Error too many agents in shield : ', sh)
 
-            elif len(ag_sh) == 1:  # there is one agent for this shield -> can accept new
-                if self.agent_pos[ag_sh[0]][0] == 0 and self.agent_pos[ag_sh[0]][1] == sh:
-                    temp = self.step_one(sh, goal_flag[ag_sh[0]], agent0=ag_sh[0])
-                elif self.agent_pos[ag_sh[0]][0] == 1 and self.agent_pos[ag_sh[0]][1] == sh:
-                    temp = self.step_one(sh, goal_flag[ag_sh[0]], agent1=ag_sh[0])
-                else:  # it's a new shield
-                    temp = self.step_one(sh, goal_flag[ag_sh[0]], agent0=ag_sh[0])
+            elif len(ag_sh) == 0 and len(des_sh) > 0:  # there are no current agents but there are new ones
+                if len(des_sh) > 2:
+                    for i in range(2, len(des_sh)):
+                        act[des_sh[i]] = 0
+
+                if des_sh[0] > des_sh[1]:
+                    temp = self.step_one(sh, [goal_flag[des_sh[0]], goal_flag[des_sh[1]]],
+                                         [a_req[des_sh[0]], a_req[des_sh[1]]],
+                                         [a_states[des_sh[0]], a_states[des_sh[1]]],
+                                         agent0=des_sh[0], agent1=des_sh[1])
+                else:
+                    temp = self.step_one(sh, [goal_flag[des_sh[1]], goal_flag[des_sh[0]]],
+                                         [a_req[des_sh[1]], a_req[des_sh[0]]],
+                                         [a_states[des_sh[1]], a_states[des_sh[0]]],
+                                         agent0=des_sh[1], agent1=des_sh[0])
+
+            elif len(ag_sh) == 1:  # there is one agent for this shield -> can accept 1 new
+                if len(des_sh) > 1:
+                    for i in range(1, len(des_sh)):  # only one is accepted so all others are denied movement.
+                        act[des_sh[i]] = 0
+
+                if self.agent_pos[ag_sh[0]][0] == 0:
+                    if len(des_sh) > 0:
+                        if des_sh[0] > ag_sh[0]:  # make sure the order in a_req is consistent with agent order
+                            temp = self.step_one(sh, [goal_flag[ag_sh[0]], goal_flag[des_sh[0]]],
+                                                 [a_req[ag_sh[0]], a_req[des_sh[0]]],
+                                                 [a_states[ag_sh[0]], a_states[des_sh[0]]],
+                                                 agent0=ag_sh[0], agent1=des_sh[0])
+                        else:
+                            temp = self.step_one(sh, [goal_flag[des_sh[0]], goal_flag[ag_sh[0]]],
+                                                 [a_req[des_sh[0]], a_req[ag_sh[0]]],
+                                                 [a_states[des_sh[0]], a_states[ag_sh[0]]],
+                                                 agent0=ag_sh[0], agent1=des_sh[0])
+                    else:
+                        temp = self.step_one(sh, goal_flag[ag_sh[0]],
+                                             a_req[ag_sh[0]], a_states[ag_sh[0]], agent0=ag_sh[0])
+
+                elif self.agent_pos[ag_sh[0]][0] == 1:
+                    if len(des_sh) > 0:
+                        if des_sh[0] > ag_sh[0]:
+                            temp = self.step_one(sh, [goal_flag[ag_sh[0]], goal_flag[des_sh[0]]],
+                                                 [a_req[ag_sh[0]], a_req[des_sh[0]]],
+                                                 [a_states[ag_sh[0]], a_states[des_sh[0]]],
+                                                 agent1=ag_sh[0], agent0=des_sh[0])
+                        else:
+                            temp = self.step_one(sh, [goal_flag[des_sh[0]], goal_flag[ag_sh[0]]],
+                                                 [a_req[des_sh[0]], a_req[ag_sh[0]]],
+                                                 [a_states[des_sh[0]], a_states[ag_sh[0]]],
+                                                 agent1=ag_sh[0], agent0=des_sh[0])
+                    else:
+                        temp = self.step_one(sh, goal_flag[ag_sh[0]],
+                                             a_req[ag_sh[0]], a_states[ag_sh[0]], agent1=ag_sh[0])
+
                 act[ag_sh[0]] = act[ag_sh[0]] and temp
 
             elif len(ag_sh) == 2:  # no more space
                 for a in des_sh:
+                    act[a] = 0
 
-                a0 = None
-                a1 = None
-                if self.agent_pos[ag_sh[0]][1] == sh:
-                    if self.agent_pos[ag_sh[0]][0] == 0:
-                        a0 = ag_sh[0]
-                        a1 = ag_sh[1]
-                    else:
-                        a0 = ag_sh[1]
-                        a1 = ag_sh[0]
+                if self.agent_pos[ag_sh[0]][0] == 0:
+                    a0 = ag_sh[0]
+                    a1 = ag_sh[1]
+                else:
+                    a0 = ag_sh[1]
+                    a1 = ag_sh[0]
 
-                elif self.agent_pos[ag_sh[1]][1] == sh:
-                    if self.agent_pos[ag_sh[1]][0] == 0:
-                        a0 = ag_sh[1]
-                        a1 = ag_sh[0]
-                    else:
-                        a0 = ag_sh[0]
-                        a1 = ag_sh[1]
-
-                else:  # both agents are new
-                    r = random.randint(0, 1)
-                    a0 = ag_sh[r]
-                    a1 = ag_sh[1 - r]
-
-                temp = self.step_one(sh, goal_flag[ag_sh], agent0=a0, agent1=a1)
+                temp = self.step_one(sh, goal_flag[ag_sh], a_req[ag_sh], a_states[ag_sh], agent0=a0, agent1=a1)
                 act[ag_sh] = act[ag_sh] and temp
+
+        # todo update agent_pos based on act
+        # TODO : move to step function instead
+        # if agent0 != None and cur['a_req' + str(agent0)] != 9:
+        #     self.agent_pos[agent0] = [0, sh]
+        # if agent1 != None and cur['a_req' + str(agent1)] != 9:
+        #     self.agent_pos[agent1] = [1, sh]
 
         # act says which ones need to be changed
         actions[not act] = 0  # blocked = 0
@@ -207,9 +245,6 @@ class GridShield:
                     s_str = 'a_shield' + str(i)
                     act[idx[i]] = cur[s_str]
 
-                if cur['a_req' + str(agent0)] == 9:
-                    self.agent_pos[agent0] = [0, sh]
-                self.agent_pos[agent1] = [1, sh]
                 self.current_state[sh] = s
                 break
 
