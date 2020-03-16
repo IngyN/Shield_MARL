@@ -85,9 +85,7 @@ class GridShield:
 
     #  use actions and current shield state to determine if action is dangerous.
     # Step -> all shields, assumption : both agents cannot have already been in the shield and both have the same idx
-    # Assumption : when 2 in shield and 1 entering -> wait one turn until on agent leaves.
-    # TODO be careful with which agent is 0 and which is 1.
-    # tODO : add a_req calculations
+    # Assumption : when 2 in shield and 1 entering -> wait one turn until on agent leaves.s
     def step(self, actions, pos, goal_flag, env):
         act = np.ones([self.nagents])
         a_states = np.zeros([self.nagents], dtype=int)

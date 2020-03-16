@@ -152,16 +152,18 @@ def train(arglist):
 
             episode_step += 1
             terminal = (episode_step >= arglist.max_episode_len)
-            # TODO add an extra experience here for shield. save new actions as [0, 0, 1, 0, 0] for 2
+            pre_obs_n = np.zeros([env.nagents])
+            # add an extra experience here for shield. save new actions as [0, 0, 1, 0, 0] for 2
             if arglist.shield:  # punish pre_actions that were changed extra.
                 if not np.all(punish == False):
+                    for i in range(env.nagents):
+                        pre_obs_n[i] = env.get_next_state(obs_n[i], pre_actions[i], done_n[i])
                     rew_shield = deepcopy(rew_n)
                     rew_shield[punish] = -10
                     action_bin = np.zeros([env.nagents, len(action_n[0])])
                     for i, agent in enumerate(trainers):
                         action_bin[i][actions[i]] = 1
-                        # TODO : shoudl new_obs_n be changed?
-                        agent.experience(obs_n[i], action_bin[i], rew_shield[i], new_obs_n[i], done_n[i], terminal)
+                        agent.experience(obs_n[i], action_bin[i], rew_shield[i], pre_obs_n[i], done_n[i], terminal)
 
             # collect experience
             for i, agent in enumerate(trainers):
