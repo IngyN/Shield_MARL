@@ -253,7 +253,6 @@ class GridShield:
     def step_one(self, sh, goal_flag, a_req, a_states, agent0=None, agent1=None):
 
         idx = self.get_arr_idx(agent0=agent0, agent1=agent1)
-
         act = np.zeros([len(goal_flag)], dtype=int)
         successors = np.array(self.shield_json[sh][str(self.current_state)]['Successors'])
 
@@ -261,18 +260,16 @@ class GridShield:
             cur = self.shield_json[sh][str(s)]['State']
             condition = np.zeros(len(goal_flag))
 
-            # tODO : this doesn't work if only one agnet was sent
             for i in range(len(goal_flag)):
                 a_str = 'a' + str(i)
                 a_req_str = 'a_req' + str(i)
 
                 if goal_flag[idx[i]] == 1:
-                    condition[i] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_states[idx[i]])
+                    condition[idx[i]] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_states[idx[i]])
                 else:
-                    condition[i] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_req[idx[i]])
+                    condition[idx[i]] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_req[idx[i]])
 
             if np.all(condition):  # found the correct successor
-                # tODO : fix this for loop as well.
                 for i in range(len(goal_flag)):
                     s_str = 'a_shield' + str(i)
                     act[idx[i]] = cur[s_str]
