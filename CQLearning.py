@@ -16,7 +16,7 @@ class CQLearning:
         self.nagents = nagents
         self.nactions = nactions
         self.map_name = map_name
-        self.grid = True
+        self.grid = grid
 
         if not grid:
             self.env = GridEnv(nagents=nagents, map_name=map_name, norender=False)  # set up ma environment

@@ -157,7 +157,7 @@ def train(arglist):
             if arglist.shield:  # punish pre_actions that were changed extra.
                 if not np.all(punish == False):
                     for i in range(env.nagents):
-                        pre_obs_n[i] = env.get_next_state(obs_n[i], pre_actions[i], done_n[i])
+                        pre_obs_n[i], _ = env.get_next_state(obs_n[i], pre_actions[i], done_n[i])
                     rew_shield = deepcopy(rew_n)
                     rew_shield[punish] = -10
                     action_bin = np.zeros([env.nagents, len(action_n[0])])
