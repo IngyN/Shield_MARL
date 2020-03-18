@@ -1,6 +1,7 @@
 import numpy as np
 from QLearning import QLearning
 from Shield import Shield
+from GridShield import GridShield
 from copy import deepcopy
 from gym_grid.envs import GridEnv
 from scipy.stats import ttest_ind, ttest_1samp
@@ -11,11 +12,16 @@ import matplotlib.pyplot as plt
 
 
 class CQLearning:
-    def __init__(self, map_name='example', nagents=2, nactions=5):
+    def __init__(self, map_name='example', nagents=2, nactions=5, grid=False):
         self.nagents = nagents
         self.nactions = nactions
         self.map_name = map_name
-        self.env = GridEnv(nagents=nagents, map_name=map_name, norender=False)  # set up ma environment
+        self.grid = True
+
+        if not grid:
+            self.env = GridEnv(nagents=nagents, map_name=map_name, norender=False)  # set up ma environment
+        else:
+            self.env = GridEnv(nagents=nagents, map_name=map_name, norender=False, padding=True)
         self.targets = self.env.targets
         self.start = self.env.start_pos
         self.alpha = 1
@@ -60,7 +66,11 @@ class CQLearning:
 
     # Initialize the local q-values using Q-learning for each agent as well as rewards history W1.
     def initialize_qvalues(self, step_max=250, episode_max=200):
-        single_env = GridEnv(nagents=1, map_name=self.map_name)
+        if not self.grid:
+            single_env = GridEnv(nagents=1, map_name=self.map_name)
+        else:
+            single_env = GridEnv(nagents=1, map_name=self.map_name, padding=True)
+
         singleQL = QLearning([single_env.nrows, single_env.ncols])
 
         for a in range(self.nagents):
@@ -303,12 +313,17 @@ class CQLearning:
 
         return i_step_max, i_episode_max, step_max, episode_max
 
-    def load_shield(self):
-        dir = 'shields/collision_' + self.map_name + '_' + str(self.nagents) + '_agents.shield'
-        self.shield = Shield(self.nagents, start=self.start, file=dir)
+    def load_shield(self, grid=False):
+        if not grid:
+            dir = 'shields/collision_' + self.map_name + '_' + str(self.nagents) + '_agents.shield'
+            self.shield = Shield(self.nagents, start=self.start, file=dir)
+        else:
+            dir = self.map_name + '/' + self.map_name + '_' + str(self.nagents) + '_agents'
+            self.shield = GridShield(self.env, self.nagents, start=self.start, file=dir)
 
     # non shielded running of the algorithm
-    def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False):
+    def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False,
+            grid=False):
 
         alpha_index = 1
         self.discount = discount
@@ -323,7 +338,7 @@ class CQLearning:
 
         if shielding:
             pre_actions = np.zeros([self.nagents], dtype=int)
-            self.load_shield()
+            self.load_shield(grid)
 
         for e in range(episode_max):  # loop over episodes
             self.env.reset()
@@ -353,7 +368,10 @@ class CQLearning:
 
                 if shielding:
                     pre_actions = deepcopy(actions)
-                    actions = self.shield.step(actions, self.env.goal_flag)
+                    if not grid:
+                        actions = self.shield.step(actions, self.env.goal_flag)
+                    else:
+                        actions = self.shield.step(actions, pos, self.env.goal_flag, self.env)
                     punish = (pre_actions != actions)
                     if len(interference[punish]) > 0:
                         idx_values = np.where(punish == True)[0]
@@ -389,94 +407,13 @@ class CQLearning:
 
         return steps + 1, acc_rew, collision, interference
 
-    # algorithm with grid support
-    def run_grid(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False):
 
-        alpha_index = 1
-        self.discount = discount
-        start_ep = 0.85
-        actions = np.zeros([self.nagents], dtype=int)
-
-        # Evaluation metrics
-        steps = np.zeros([episode_max], dtype=int)
-        acc_rew = np.zeros([episode_max, self.nagents])
-        collision = np.zeros([episode_max])
-        interference = np.zeros([self.nagents, episode_max])
-
-        if shielding:
-            pre_actions = np.zeros([self.nagents], dtype=int)
-            self.load_shield()
-
-        for e in range(episode_max):  # loop over episodes
-            self.env.reset()
-            if shielding:
-                self.shield.reset()
-            # self.reset_W()
-            done = False
-
-            if debug:
-                print('episode : ', e + 1)
-
-            for s in range(step_max):  # loop over steps
-
-                self.alpha = alpha_index / (0.1 * s + 0.5)
-                # ep = 1 / (0.6 * e + 3) + 0.1
-                ep = start_ep - e * 0.0002 if e > episode_max * 0.87 else start_ep
-                pos = deepcopy(self.env.pos)  # update pos based in the environment
-
-                if debug:
-                    self.env.render(episode=e + 1, speed=1)
-
-                for a in range(self.nagents):  # greedy select an action
-                    if not testing:
-                        actions[a] = self.action_selection(pos, a, epsilon=ep)  # select actions for each agent
-                    else:
-                        actions[a] = self.action_selection(pos, a, epsilon=0.05)
-
-                if shielding:
-                    pre_actions = deepcopy(actions)
-                    actions = self.shield.step(actions, self.env.goal_flag)
-                    punish = (pre_actions != actions)
-                    if len(interference[punish]) > 0:
-                        idx_values = np.where(punish == True)[0]
-                        for idx in idx_values:
-                            interference[idx][e] += 1
-
-                # update environment and retrieve rewards:
-                obs, rew, info, done = self.env.step(actions)  # sample rewards and new states
-                acc_rew[e] += rew
-                collision[e] += info['collisions']
-                # if info['collisions'] > 0:
-                #     print(self.shield.current_state, ' - ', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
-                #       '- coll: ', info['collisions'])
-
-                if shielding:  # punish pre_actions that were changed extra.
-                    if not np.all(punish == False):
-                        rew_shield = deepcopy(rew)
-                        rew_shield[punish] = -10
-                        self.update_W(pos, pre_actions, rew_shield)
-                        self.update(pos, obs, rew_shield, pre_actions)
-
-                self.update_W(pos, actions, rew)  # Update observed rewards. l. 11 in pseudo-code.
-                self.update(pos, obs, rew, actions)  # update marks and qvalues
-
-                if np.all(done):  # if all agents have reached their goal -> episode is finished
-                    steps[e] = s
-                    if debug:
-                        self.env.render(episode=e + 1, speed=1)
-                    break
-
-            if not np.all(done):  # if episode terminated without agents reaching their goals
-                steps[e] = step_max - 1
-
-        return steps + 1, acc_rew, collision, interference
-
-def full_test(cq, shielding=False):
+def full_test(shielding=False):
     ep_train = 500
     steps_train = 500
     steps_test = 50
     ep_test = 10
-
+    cq = CQLearning(map_name='ISR', nagents=2)
     # MIT
     # ep_train = 500
     # steps_train = 500
@@ -494,23 +431,25 @@ def full_test(cq, shielding=False):
     print('steps test: \n', s2)
 
 
-def min_test(cq):
+def min_test():
+    cq = CQLearning(map_name='ISR', nagents=2, grid=True)
     cq.initialize_qvalues()
-    s, _, _, _ = cq.run(step_max=20, episode_max=90, debug=False)
+    s, _, _, _ = cq.run(step_max=20, episode_max=90, debug=True, shielding=True, grid=True)
     print('steps train: \n', s)
 
 
-def shield_test(cq):
+def shield_test():
+    cq = CQLearning(map_name='ISR', nagents=2)
     cq.initialize_qvalues()
     s, _, _, _ = cq.run(step_max=20, episode_max=90, debug=False, shielding=True)
     print('steps train: \n', s)
 
 
 if __name__ == "__main__":
-    cq = CQLearning(map_name='ISR', nagents=2)
+    # cq = CQLearning(map_name='ISR', nagents=2)
     # MIT
     # cq.initialize_qvalues(episode_max= 1000, step_max=500)
 
-    full_test(cq=cq, shielding=True)
-    # min_test(cq=cq)
-    # shield_test(cq=cq)
+    # full_test( shielding=True)
+    min_test()
+    # shield_test()

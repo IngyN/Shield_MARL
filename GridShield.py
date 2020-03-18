@@ -13,6 +13,7 @@ class GridShield:
         self.max_per_shield = 2
 
         self.smap = np.zeros([env.nrows, env.ncols])
+        print('rows :', env.nrows, ' - cols: ', env.ncols)
         for i in range(env.nrows):
             for j in range(env.ncols):
                 # 1 based shield number
@@ -28,7 +29,7 @@ class GridShield:
 
         # loading Shields.
         for sh in range(self.nshields):
-            f = open(base + file + str(sh))
+            f = open(base + file + '_' + str(sh) + '.shield')
             self.shield_json.append(json.load(f))
             f.close()
 
@@ -37,6 +38,7 @@ class GridShield:
             sh_ind = self.smap[start[i][0]][start[i][1]]
             self.agent_pos[i][1] = sh_ind
 
+        print(self.smap)
         # find the start state for each shield.
         for sh in range(self.nshields):
             ag = np.where(self.agent_pos[:, 1] == sh)[0]
@@ -48,22 +50,30 @@ class GridShield:
                 else:
                     print('State not found for shield : ', str(sh))
 
+        print(self.agent_pos)
+
     # search shield to find right start state based on agent start states
     # i = index of shield, agents = indices of agents in shield i
     def _find_start_state(self, start, i, agents):
         found = False
 
+        pos = []
+        for a in agents:
+            pos.append(self._to_state(start[a]))
+
+        print(pos)
+        print(agents)
+
         for ind in range(len(self.shield_json[i])):
             cur = self.shield_json[i][str(ind)]['State']
-            condition = np.zeros(agents)
+            condition = np.zeros([len(agents)])
 
-            for i in range(len(agents)):
-                str_x = 'x' + str(i)
-                str_y = 'y' + str(i)
-                if start[i][0] == cur[str_x] and start[i][1] == cur[str_y]:
-                    condition[i] = 1
+            for a in range(len(agents)):
+                str_state = 'a' + str(a)
+                if pos[a] == cur[str_state]:
+                    condition[a] = 1
 
-            if np.count_nonzero(condition) == agents:
+            if np.count_nonzero(condition) == len(agents):
                 found = True
                 self.start_state[i] = ind  # state number.
                 for a in agents:
@@ -76,7 +86,7 @@ class GridShield:
     # Transform 2d coordinate to inner shield state.
     def _to_state(self, pos):
         sh = self.smap[pos[0]][pos[1]]
-        corner = np.array([(int(sh / self.res[0])) * self.res[0], (sh % self.res[1]) * self.res[1]])
+        corner = np.array([(int(sh / self.res[0])) * self.res[0], (sh % self.res[1]) * self.res[1]], dtype=int)
         in_shield_pos = pos - corner
 
         state = self.states[in_shield_pos[0]][in_shield_pos[1]]
