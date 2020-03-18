@@ -97,9 +97,9 @@ class QLearning:
 
 
 if __name__ == "__main__":
-    env = GridEnv(nagents=1, norender=False)
-    env.set_start(np.array([[2, 4]]))
-    env.set_targets(np.array([[2, 0]]))
+    env = GridEnv(nagents=1, norender=False, padding=True)
+    env.set_start(np.array([2, 4]))
+    env.set_targets(np.array([2, 1]))
     singleQL = QLearning([env.nrows, env.ncols])
     env.render()
     # input('next')
