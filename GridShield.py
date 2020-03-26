@@ -135,7 +135,7 @@ class GridShield:
             des_sh = np.where(desired_shield == sh)[0]
             des_sh = np.setdiff1d(des_sh, ag_sh)  # only in desired (not already in these shields)
             ex_sh = []  # agents exiting
-            a_des_states = [9] * len(des_sh)
+            a_des_states = [9] * len(des_sh)  # they;re not in the shield so current state is 9.
 
             # find exiting agents
             for a in ag_sh:
@@ -152,9 +152,11 @@ class GridShield:
                         act[des_sh[i]] = False
 
                 if len(des_sh) == 1:
+                    print('des_sh:', des_sh)
+                    print('a_des_states:', a_des_states)
                     temp = self.step_one(sh, [goal_flag[des_sh[0]]],
                                          [a_req[des_sh[0]]],
-                                         [a_des_states[des_sh[0]]],
+                                         [a_des_states[0]],
                                          agent0=des_sh[0])
                     shield_idx[des_sh[0]][1] = 0
                     act[des_sh[0]] = act[des_sh[0]] and temp[0]
@@ -162,7 +164,7 @@ class GridShield:
                 elif des_sh[0] > des_sh[1]:
                     temp = self.step_one(sh, [goal_flag[des_sh[0]], goal_flag[des_sh[1]]],
                                          [a_req[des_sh[0]], a_req[des_sh[1]]],
-                                         [a_des_states[des_sh[0]], a_des_states[des_sh[1]]],
+                                         [a_des_states[0], a_des_states[1]],
                                          agent0=des_sh[0], agent1=des_sh[1])
                     shield_idx[des_sh[0]][1] = 0
                     shield_idx[des_sh[1]][1] = 1
@@ -171,7 +173,7 @@ class GridShield:
                 else:
                     temp = self.step_one(sh, [goal_flag[des_sh[1]], goal_flag[des_sh[0]]],
                                          [a_req[des_sh[1]], a_req[des_sh[0]]],
-                                         [a_states[a_des_states[1]], a_states[a_des_states[0]]],
+                                         [a_des_states[des_sh[1]], a_des_states[0]],
                                          agent0=des_sh[1], agent1=des_sh[0])
                     shield_idx[des_sh[0]][1] = 1
                     shield_idx[des_sh[1]][1] = 0
@@ -188,7 +190,7 @@ class GridShield:
                         if des_sh[0] > ag_sh[0]:  # make sure the order in a_req is consistent with agent order
                             temp = self.step_one(sh, [goal_flag[ag_sh[0]], goal_flag[des_sh[0]]],
                                                  [a_req[ag_sh[0]], a_req[des_sh[0]]],
-                                                 [a_states[ag_sh[0]], a_des_states[des_sh[0]]],
+                                                 [a_states[ag_sh[0]], a_des_states[0]],
                                                  agent0=ag_sh[0], agent1=des_sh[0])
                             shield_idx[des_sh[0]][1] = 1
                             shield_idx[ag_sh[0]][0] = 0
@@ -197,7 +199,7 @@ class GridShield:
                         else:
                             temp = self.step_one(sh, [goal_flag[des_sh[0]], goal_flag[ag_sh[0]]],
                                                  [a_req[des_sh[0]], a_req[ag_sh[0]]],
-                                                 [a_des_states[des_sh[0]], a_states[ag_sh[0]]],
+                                                 [a_des_states[0], a_states[ag_sh[0]]],
                                                  agent0=ag_sh[0], agent1=des_sh[0])
                             shield_idx[des_sh[0]][1] = 1
                             shield_idx[ag_sh[0]][0] = 0
@@ -214,7 +216,7 @@ class GridShield:
                         if des_sh[0] > ag_sh[0]:
                             temp = self.step_one(sh, [goal_flag[ag_sh[0]], goal_flag[des_sh[0]]],
                                                  [a_req[ag_sh[0]], a_req[des_sh[0]]],
-                                                 [a_states[ag_sh[0]], a_des_states[des_sh[0]]],
+                                                 [a_states[ag_sh[0]], a_des_states[0]],
                                                  agent1=ag_sh[0], agent0=des_sh[0])
                             shield_idx[des_sh[0]][1] = 0
                             shield_idx[ag_sh[0]][0] = 1
@@ -223,7 +225,7 @@ class GridShield:
                         else:
                             temp = self.step_one(sh, [goal_flag[des_sh[0]], goal_flag[ag_sh[0]]],
                                                  [a_req[des_sh[0]], a_req[ag_sh[0]]],
-                                                 [a_des_states[des_sh[0]], a_states[ag_sh[0]]],
+                                                 [a_des_states[0], a_states[ag_sh[0]]],
                                                  agent1=ag_sh[0], agent0=des_sh[0])
                             shield_idx[des_sh[0]][1] = 0
                             shield_idx[ag_sh[0]][0] = 1
@@ -252,7 +254,9 @@ class GridShield:
                     shield_idx[ag_sh[1]][0] = 0
 
                 temp = self.step_one(sh, goal_flag[ag_sh], a_req[ag_sh], a_states[ag_sh], agent0=a0, agent1=a1)
-                act[ag_sh] = act[ag_sh] and temp
+
+                for a in ag_sh:
+                    act[a] = act[a] and temp[a]
 
         for i in range(self.nagents):
             if act[i]:
