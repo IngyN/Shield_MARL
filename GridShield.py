@@ -232,7 +232,6 @@ class GridShield:
                     else:
                         temp = self.step_one(sh, goal_flag[ag_sh[0]],
                                              temp_req[ag_sh[0]], a_states[ag_sh[0]], agent1=ag_sh[0])
-                        shield_idx[ag_sh[0]][0] = 1
                         act[ag_sh[0]] = act[ag_sh[0]] and temp
 
 
@@ -255,8 +254,6 @@ class GridShield:
         for i in range(self.nagents):
             if act[i]:
                 self.agent_pos[i] = [shield_idx[i][1], desired_shield[i]]
-            else:
-                self.agent_pos[i] = [shield_idx[i][0], self.agent_pos[i][1]]
 
         # act says which ones need to be changed
         actions[~ act] = False  # blocked = False
