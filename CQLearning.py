@@ -432,14 +432,14 @@ def full_test(shielding=False):
 
 
 def min_test():
-    cq = CQLearning(map_name='ISR', nagents=2, grid=True)
+    cq = CQLearning(map_name='example', nagents=2, grid=True)
     cq.initialize_qvalues()
     s, _, _, _ = cq.run(step_max=20, episode_max=90, debug=True, shielding=True, grid=True)
     print('steps train: \n', s)
 
 
 def shield_test():
-    cq = CQLearning(map_name='ISR', nagents=2)
+    cq = CQLearning(map_name='example', nagents=2)
     cq.initialize_qvalues()
     s, _, _, _ = cq.run(step_max=20, episode_max=90, debug=False, shielding=True)
     print('steps train: \n', s)
