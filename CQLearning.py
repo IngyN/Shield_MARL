@@ -437,6 +437,10 @@ def min_test():
     s, _, _, _ = cq.run(step_max=20, episode_max=90, debug=True, shielding=True, grid=True)
     print('steps train: \n', s)
 
+    f1 = plt.figure(num=1)
+    f1.plot(s)
+
+
 
 def shield_test():
     cq = CQLearning(map_name='example', nagents=2)
