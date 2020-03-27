@@ -270,6 +270,31 @@ class GridShield:
                 idx = [0, 1]  # agent0 < agent1
         return idx
 
+    # this function takes a shield state and checks if it matches requirements
+    def _compute_condition(self, cur, goal_flag, a_states, a_req, idx, agent0=None, agent1=None):
+        condition = np.zeros([self.max_per_shield])
+
+        for i in range(len(goal_flag)):
+            a_str = 'a' + str(i)
+            a_req_str = 'a_req' + str(i)
+
+            if goal_flag[idx[i]] == 1:
+                condition[idx[i]] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_states[idx[i]])
+            else:
+                condition[idx[i]] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_req[idx[i]][0])
+
+        if agent0 is None:
+            a_str = 'a' + str(0)
+            a_req_str = 'a_req' + str(0)
+            condition[1] = (cur[a_str] == 9 and cur[a_req_str] == 9)
+
+        if agent1 is None:
+            a_str = 'a' + str(1)
+            a_req_str = 'a_req' + str(1)
+            condition[1] = (cur[a_str] == 9 and cur[a_req_str] == 9)
+
+        return condition
+
     # Processes one shield and relevant agents
     def step_one(self, sh, goal_flag, a_req, a_states, agent0=None, agent1=None):
 
@@ -282,28 +307,11 @@ class GridShield:
         act = np.zeros([len(goal_flag)], dtype=int)
         successors = np.array(self.shield_json[sh][str(self.current_state[sh])]['Successors'])
 
+        # TODO: currently not always choosing the correct successor
         for s in successors:
             cur = self.shield_json[sh][str(s)]['State']
-            condition = np.zeros([self.max_per_shield])
 
-            for i in range(len(goal_flag)):
-                a_str = 'a' + str(i)
-                a_req_str = 'a_req' + str(i)
-
-                if goal_flag[idx[i]] == 1:
-                    condition[idx[i]] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_states[idx[i]])
-                else:
-                    condition[idx[i]] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_req[idx[i]][0])
-
-            if agent0 is None:
-                a_str = 'a' + str(0)
-                a_req_str = 'a_req' + str(0)
-                condition[1] = (cur[a_str] == 9 and cur[a_req_str] == 9)
-
-            if agent1 is None:
-                a_str = 'a' + str(1)
-                a_req_str = 'a_req' + str(1)
-                condition[1] = (cur[a_str] == 9 and cur[a_req_str] == 9)
+            condition = self._compute_condition(cur, goal_flag, a_states, a_req, idx, agent0, agent1)
 
             if np.all(condition):  # found the correct successor
                 for i in range(len(goal_flag)):

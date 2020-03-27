@@ -383,8 +383,8 @@ class CQLearning:
                 acc_rew[e] += rew
                 collision[e] += info['collisions']
                 # if info['collisions'] > 0:
-                #     print(self.shield.current_state, ' - ', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
-                #       '- coll: ', info['collisions'])
+                print(self.shield.current_state, ' - ', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
+                      '- coll: ', info['collisions'])
 
                 if shielding:  # punish pre_actions that were changed extra.
                     if not np.all(punish == False):
@@ -434,7 +434,7 @@ def full_test(shielding=False):
 def min_test():
     cq = CQLearning(map_name='example', nagents=2, grid=True)
     cq.initialize_qvalues()
-    s, _, _, _ = cq.run(step_max=20, episode_max=90, debug=True, shielding=True, grid=True)
+    s, _, _, _ = cq.run(step_max=20, episode_max=50, debug=True, shielding=True, grid=True)
     print('steps train: \n', s)
 
     f1 = plt.figure(num=1)
