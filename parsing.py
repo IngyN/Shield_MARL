@@ -4,8 +4,8 @@ import sys, getopt
 def get_options(debug=False):
     opts, args = getopt.getopt(
         sys.argv[1:],
-        'n:p:i:d:s:',
-        ['nagents', 'shielding', 'iterations', 'display', 'save'],
+        'n:p:i:d:s:g',
+        ['nagents', 'shielding', 'iterations', 'display', 'save', 'grid'],
     )
 
     agents = 2
@@ -13,6 +13,7 @@ def get_options(debug=False):
     iterations = 10
     display = False
     save = True
+    grid = False
 
     for opt, arg in opts:
         if opt in ('-n', '--nagents'):
@@ -36,6 +37,11 @@ def get_options(debug=False):
                 print(opt + ': ' + arg)
 
         elif opt in ('-s', '--save'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            save = bool(int(arg))
+
+        elif opt in ('-g', '--grid'):
             if debug:
                 print(opt + ':' + arg + ':')
             save = bool(int(arg))

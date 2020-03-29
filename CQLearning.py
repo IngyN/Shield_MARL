@@ -432,7 +432,7 @@ def full_test(shielding=False):
 
 
 def min_test():
-    cq = CQLearning(map_name='example', nagents=2, grid=True)
+    cq = CQLearning(map_name='ISR', nagents=2, grid=True)
     cq.initialize_qvalues()
     s, _, _, _ = cq.run(step_max=20, episode_max=50, debug=True, shielding=True, grid=True)
     print('steps train: \n', s)
