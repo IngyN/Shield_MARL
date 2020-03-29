@@ -44,13 +44,13 @@ def get_options(debug=False):
         elif opt in ('-g', '--grid'):
             if debug:
                 print(opt + ':' + arg + ':')
-            save = bool(int(arg))
+            grid = bool(int(arg))
 
         else:
             if debug:
                 print('invalid')
 
-    return agents, shielding, iterations, display, save
+    return agents, shielding, iterations, display, save, grid
 
 
 if __name__ == "__main__":
