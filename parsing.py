@@ -4,7 +4,7 @@ import sys, getopt
 def get_options(debug=False):
     opts, args = getopt.getopt(
         sys.argv[1:],
-        'n:p:i:d:s:g',
+        'n:p:i:d:s:g:',
         ['nagents', 'shielding', 'iterations', 'display', 'save', 'grid'],
     )
 
