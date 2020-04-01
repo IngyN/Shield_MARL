@@ -62,7 +62,7 @@ class GridShield:
         for a in agents:
             pos.append(self._to_state(start[a]))
 
-        print('shield:', i, 'pos:', pos, 'agents: ', agents)
+        # print('shield:', i, 'pos:', pos, 'agents: ', agents)
 
         for ind in range(len(self.shield_json[i])):
             cur = self.shield_json[i][str(ind)]['State']
@@ -252,6 +252,10 @@ class GridShield:
                 for a in ag_sh:
                     act[a] = act[a] and temp[a]
 
+            else: # no agents and no desired
+                self.current_state[sh] = 0
+
+
         for i in range(self.nagents):
             if act[i]:
                 self.agent_pos[i] = [shield_idx[i][1], desired_shield[i]]
@@ -260,7 +264,7 @@ class GridShield:
         actions[~ act] = False  # blocked = False
         return actions
 
-    def get_arr_idx(self, agent0=None, agent1=None):
+    def _get_arr_idx(self, agent0=None, agent1=None):
         idx = []
         if agent0 is None or agent1 is None:
             idx = [0]
@@ -271,13 +275,27 @@ class GridShield:
                 idx = [0, 1]  # agent0 < agent1
         return idx
 
+    def _get_agent_idx(self, agent0=None, agent1=None):
+        idx = []
+        if agent0 is not None and agent1 is None:
+            idx = [0]
+        elif agent1 is not None and agent0 is None:
+            idx=[1]
+
+        elif agent1 is not None and agent0 is not None:
+            if agent0 > agent1:
+                idx = [1, 0]
+            else:
+                idx = [0, 1]  # agent0 < agent1
+        return idx
+
     # this function takes a shield state and checks if it matches requirements
-    def _compute_condition(self, cur, goal_flag, a_states, a_req, idx, agent0=None, agent1=None):
+    def _compute_condition(self, cur, goal_flag, a_states, a_req, idx, a_idx, agent0=None, agent1=None):
         condition = np.zeros([self.max_per_shield])
 
         for i in range(len(goal_flag)):
-            a_str = 'a' + str(i)
-            a_req_str = 'a_req' + str(i)
+            a_str = 'a' + str(a_idx[i])
+            a_req_str = 'a_req' + str(a_idx[i])
 
             if goal_flag[idx[i]] == 1:
                 condition[idx[i]] = (cur[a_str] == a_states[idx[i]] and cur[a_req_str] == a_states[idx[i]])
@@ -299,7 +317,9 @@ class GridShield:
     # Processes one shield and relevant agents
     def step_one(self, sh, goal_flag, a_req, a_states, agent0=None, agent1=None):
 
-        idx = self.get_arr_idx(agent0=agent0, agent1=agent1)
+        idx = self._get_arr_idx(agent0=agent0, agent1=agent1) # idx of present agent in arrays
+        a_idx = self._get_agent_idx(agent0=agent0, agent1=agent1) # idx of present agents
+
         if type(goal_flag) is np.int64:  # if there's only one agent
             goal_flag = np.array([goal_flag])
             a_states = np.array([a_states])
@@ -312,7 +332,7 @@ class GridShield:
         for s in successors:
             cur = self.shield_json[sh][str(s)]['State']
 
-            condition = self._compute_condition(cur, goal_flag, a_states, a_req, idx, agent0, agent1)
+            condition = self._compute_condition(cur, goal_flag, a_states, a_req, idx, a_idx, agent0, agent1)
 
             if np.all(condition):  # found the correct successor
                 for i in range(len(goal_flag)):

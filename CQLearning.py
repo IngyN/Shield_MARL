@@ -382,10 +382,8 @@ class CQLearning:
                 obs, rew, info, done = self.env.step(actions)  # sample rewards and new states
                 acc_rew[e] += rew
                 collision[e] += info['collisions']
-                # if info['collisions'] > 0:
                 if debug:
-                    print(self.shield.current_state, ' - ', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
-                          '- coll: ', info['collisions'])
+                    print(self.shield.current_state,' - pre_a: ', pre_actions,' - a:', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten())
 
                 if shielding:  # punish pre_actions that were changed extra.
                     if not np.all(punish == False):
@@ -414,7 +412,7 @@ def full_test(shielding=False):
     steps_train = 500
     steps_test = 50
     ep_test = 10
-    cq = CQLearning(map_name='Pentagon', nagents=2, grid=True)
+    cq = CQLearning(map_name='ISR', nagents=2, grid=True)
     # MIT
     # ep_train = 500
     # steps_train = 500
@@ -422,7 +420,7 @@ def full_test(shielding=False):
     # ep_test = 10
     cq.initialize_qvalues(step_max=steps_train, episode_max=ep_train)
 
-    s, acc, coll, inter = cq.run(step_max=steps_train, episode_max=ep_train, debug=False, shielding=shielding, grid=True)
+    s, acc, coll, inter = cq.run(step_max=steps_train, episode_max=ep_train, debug=True, shielding=shielding, grid=True)
     print('steps train: \n', s)
     print('coll train: \n', coll)
     if shielding:

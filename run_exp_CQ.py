@@ -28,7 +28,7 @@ def format_data(steps, acc, coll, inter, ep):
 
 # Loop over all maps
 for m in map_names:
-    cq = CQLearning(map_name=m, nagents=agents)
+    cq = CQLearning(map_name=m, nagents=agents, grid=grid)
     i_step_max, i_episode_max, step_max, episode_max = cq.get_recommended_training_vars()
 
     train_data = []
