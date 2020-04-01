@@ -95,7 +95,8 @@ class GridShield:
     # Transform 2d coordinate to inner shield state.
     def _to_state(self, pos):
         sh = self.smap[pos[0]][pos[1]]
-        corner = np.array([(int(sh / self.res[0])) * self.res[0], (sh % self.res[1]) * self.res[1]], dtype=int)
+        res_width = self.smap.shape[1]/ self.res[0]
+        corner = np.array([(int(sh /res_width)) * self.res[0], (sh % res_width) * self.res[1]], dtype=int)
         in_shield_pos = pos - corner
 
         state = self.states[in_shield_pos[0]][in_shield_pos[1]]
