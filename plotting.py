@@ -5,7 +5,7 @@ from copy import deepcopy
 
 from mpl_toolkits.axes_grid1 import host_subplot
 
-def plot_v2(data, agents, map='example', iteration=1, test=False, shielding=False, save=True, display=False):
+def plot_v2(data, agents, map='example', iteration=1, test=False, shielding=False, save=True, display=False, grid=False):
     if display:
         plt.ioff()
     # Sent for figure
@@ -100,7 +100,11 @@ def plot_v2(data, agents, map='example', iteration=1, test=False, shielding=Fals
 
     plt.subplots_adjust(left=0.12, right=0.9, wspace=0.33, hspace=0.31)
     shield_txt = ['', 'shield_']
-    dir_loc = 'figures/' + map + '/4_cq_'
+    if grid:
+        dir_loc = 'figures/' + map + '/4_cq_grid_'
+    else:
+        dir_loc = 'figures/' + map + '/4_cq_'
+
     if save:
         if not test:
             f1.savefig(dir_loc + shield_txt[int(shielding)] + map + '_' + str(agents) + '_train_' + str(
