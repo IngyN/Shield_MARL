@@ -62,7 +62,7 @@ class CQLearning:
                            self.nsaved + 1]) * np.nan  # nan vals were not initialized
 
     def reset(self):
-        self.__init__(self.map_name, self.nagents, self.nactions)
+        self.__init__(self.map_name, self.nagents, self.nactions, self.grid)
 
     # Initialize the local q-values using Q-learning for each agent as well as rewards history W1.
     def initialize_qvalues(self, step_max=250, episode_max=200):

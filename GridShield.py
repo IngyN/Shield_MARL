@@ -354,7 +354,7 @@ class GridShield:
         # reset to start state.
         self.current_state = deepcopy(self.start_state)
         self.agent_pos = deepcopy(self.start_pos)
-
+        self.prev_pos = deepcopy(self.agent_pos)
 
 # for testing
 if __name__ == "__main__":
