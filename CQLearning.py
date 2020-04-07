@@ -313,17 +313,21 @@ class CQLearning:
 
         return i_step_max, i_episode_max, step_max, episode_max
 
-    def load_shield(self, grid=False):
+    def load_shield(self, grid=False, fair=False):
         if not grid:
             dir = 'shields/collision_' + self.map_name + '_' + str(self.nagents) + '_agents.shield'
             self.shield = Shield(self.nagents, start=self.start, file=dir)
         else:
-            dir = self.map_name + '/' + self.map_name + '_' + str(self.nagents) + '_agents'
+            if fair:
+                dir = self.map_name + '/' + self.map_name + '_' + str(self.nagents) + '_agents_fair'
+            else:
+                dir = self.map_name + '/' + self.map_name + '_' + str(self.nagents) + '_agents'
+
             self.shield = GridShield(self.env, self.nagents, start=self.start, file=dir)
 
     # non shielded running of the algorithm
     def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False,
-            grid=False):
+            grid=False, fair=False):
 
         alpha_index = 1
         self.discount = discount
@@ -338,7 +342,7 @@ class CQLearning:
 
         if shielding:
             pre_actions = np.zeros([self.nagents], dtype=int)
-            self.load_shield(grid)
+            self.load_shield(grid, fair)
 
         for e in range(episode_max):  # loop over episodes
             self.env.reset()
