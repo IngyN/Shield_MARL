@@ -35,7 +35,7 @@ for m in map_names:
     test_data = []
 
     for i in range(iterations):
-        print("\n *************************** iteration ", i, "/", iterations, "************************")
+        print("\n *************************** iteration ", i+1, "/", iterations, "**************************")
         cq.initialize_qvalues(step_max=i_step_max, episode_max=i_episode_max)
 
         s, acc, coll, inter = cq.run(step_max=step_max, episode_max=episode_max,

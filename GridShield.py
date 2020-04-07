@@ -13,7 +13,7 @@ class GridShield:
         self.max_per_shield = 2
 
         self.smap = np.zeros([env.nrows, env.ncols])
-        print('rows :', env.nrows, ' - cols: ', env.ncols)
+        # print('rows :', env.nrows, ' - cols: ', env.ncols)
         for i in range(env.nrows):
             for j in range(env.ncols):
                 # 1 based shield number
@@ -50,7 +50,7 @@ class GridShield:
                 else:
                     print('State not found for shield : ', str(sh))
 
-        print(self.agent_pos)
+        # print(self.agent_pos)
         self.start_pos = deepcopy(self.agent_pos)
         self.prev_pos = deepcopy(self.agent_pos)
 

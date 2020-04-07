@@ -90,7 +90,7 @@ class QLearning:
 
             if stop:
                 break
-        print(steps + 1)
+        # print(steps + 1)
         if save:
             return self.qvalues, hist
         else:
