@@ -277,8 +277,8 @@ class CQLearning:
 
     def get_recommended_training_vars(self):  # save recommended training vars.
         # joint :
-        step_max = 250
-        episode_max = 200
+        step_max = 500
+        episode_max = 700
 
         if self.map_name == 'example':
             pass
@@ -288,14 +288,14 @@ class CQLearning:
             pass
         elif self.map_name == 'MIT':
             step_max = 500
-            episode_max = 500
+            episode_max = 700
 
         elif self.map_name == 'SUNY':
             step_max = 500
-            episode_max = 500
+            episode_max = 700
 
         # independent
-        i_step_max = 250
+        i_step_max = 400
         i_episode_max = 200
         if self.map_name == 'example':
             pass
