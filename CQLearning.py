@@ -278,25 +278,28 @@ class CQLearning:
     def get_recommended_training_vars(self):  # save recommended training vars.
         # joint :
         step_max = 500
-        episode_max = 700
+        episode_max = 1000
 
         if self.map_name == 'example':
+            # step_max = 500
+            # episode_max = 800
             pass
+
         elif self.map_name == 'ISR':
             pass
         elif self.map_name == 'Pentagon':
             pass
         elif self.map_name == 'MIT':
-            step_max = 500
-            episode_max = 700
+            pass
+            # step_max = 500
+            # episode_max = 700
 
         elif self.map_name == 'SUNY':
-            step_max = 500
-            episode_max = 700
+            pass
 
         # independent
-        i_step_max = 400
-        i_episode_max = 200
+        i_step_max = 500
+        i_episode_max = 500
         if self.map_name == 'example':
             pass
         elif self.map_name == 'ISR':
@@ -305,11 +308,11 @@ class CQLearning:
             pass
         elif self.map_name == 'MIT':
             i_step_max = 500
-            i_episode_max = 1000
+            i_episode_max = 1200
 
         elif self.map_name == 'SUNY':
             i_step_max = 500
-            i_episode_max = 1000
+            i_episode_max = 1200
 
         return i_step_max, i_episode_max, step_max, episode_max
 
@@ -327,11 +330,15 @@ class CQLearning:
 
     # non shielded running of the algorithm
     def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False,
-            grid=False, fair=False):
+            grid=False, fair=False, start_ep=1):
 
         alpha_index = 1
         self.discount = discount
-        start_ep = 0.85
+
+        #if self.map_name == 'example':
+        #    start_ep = 0.85
+
+        coef = (-0.05 + start_ep)/episode_max
         actions = np.zeros([self.nagents], dtype=int)
 
         # Evaluation metrics
@@ -358,7 +365,9 @@ class CQLearning:
 
                 self.alpha = alpha_index / (0.1 * s + 0.5)
                 # ep = 1 / (0.6 * e + 3) + 0.1
-                ep = start_ep - e * 0.0002 if e > episode_max * 0.87 else start_ep
+
+                ep = start_ep - e * coef #if e > episode_max * 0.75 else start_ep
+
                 pos = deepcopy(self.env.pos)  # update pos based in the environment
 
                 if debug:
@@ -383,7 +392,7 @@ class CQLearning:
                             interference[idx][e] += 1
 
                 # update environment and retrieve rewards:
-                obs, rew, info, done = self.env.step(actions)  # sample rewards and new states
+                obs, rew, info, done = self.env.step(actions, noop=True)  # sample rewards and new states
                 acc_rew[e] += rew
                 collision[e] += info['collisions']
                 if debug:

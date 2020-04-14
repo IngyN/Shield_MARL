@@ -1,0 +1,74 @@
+import numpy as np
+import pandas as pd
+import sys, getopt
+
+cols = ['Map', 'Shield', '# iterations', 'ep_train', 'steps_train', 'coll_train',
+        'acc_0_train', 'inter_0_train', 'acc_1_train', 'inter_1_train']
+data_cols = ['coll_train', 'acc_0_train', 'inter_0_train', 'acc_1_train', 'inter_1_train']
+base = ['Map', 'Shield', 'Grid']
+
+# parse arguments
+def get_options(debug=False):
+    opts, args = getopt.getopt(
+        sys.argv[1:],
+        'f:',
+        ['file'],
+    )
+
+    filename = None
+
+    for opt, arg in opts:
+        if opt in ('-f', '--file'):
+            filename = str(arg)
+            if debug:
+                print(opt + ': ' + arg)
+
+    return filename
+
+
+
+def process_df(filename):
+
+    df = pd.read_csv(filename, index_col=False, usecols=cols, sep='\t')
+
+    print(df)
+
+    num_iterations = df['# iterations'].iloc[0]
+    num_episodes = df['ep_train'].iloc[0]
+    maps = df['Map'].unique()
+
+    sum_df = pd.DataFrame(columns=base + data_cols)
+    print(sum_df)
+
+    row = {}
+    row['Shield'] = df['Shield'].iloc[0]
+    row['Grid'] = 1 if 'grid' in filename else 0
+
+    for map in maps:
+        row['Map'] = map
+
+        for e in range(num_episodes):
+            for col in data_cols:
+                sum = 0
+                for i in range(num_iterations):
+                    sum += df[col].iloc[e + i * num_episodes]
+
+                row[col] = sum / 10.0
+
+            sum_df = sum_df.append(row, ignore_index=True)
+
+    print(sum_df)
+    print(sum_df.describe())
+
+    new_file = 'graph_data/'+filename[5:]
+    sum_df.to_csv(new_file, encoding='utf-8')
+
+if __name__ == "__main__":
+    filename = get_options(debug=True)
+
+    if filename is None:
+        print('Error: No path provided \n')
+        exit(1)
+
+    else:
+        process_df(filename)

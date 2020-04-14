@@ -8,7 +8,7 @@ import numpy as np
 # map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
 map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
 
-agents, shielding, iterations, display, save, grid, fair = get_options()
+agents, shielding, iterations, display, save, grid, fair, extra = get_options()
 steps_test = 100
 ep_test = 10
 
@@ -60,4 +60,7 @@ for m in map_names:
 
 # print(logger.df)
 # print(logger.raw_df)
-logger.save('CQ+shield', grid=grid, fair=fair)
+if shielding:
+    logger.save('CQ+shield', grid=grid, fair=fair, extra=extra)
+else:
+    logger.save('CQ', grid=grid, fair=fair, extra=extra)

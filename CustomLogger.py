@@ -138,13 +138,16 @@ class CustomLogger:
 
                 self.raw_df = self.raw_df.append(raw_entry, ignore_index=True)
 
-    def save(self, alg, grid=False, fair=False):
+    def save(self, alg, grid=False, fair=False, extra=None):
         # save the dataframe to a csv file.
         if grid:
             if fair:
                 alg = 'grid_fair_'+alg
             else:
                 alg = 'grid_' + alg
+
+        if extra is not None:
+            alg = alg + '_' + extra + '_'
 
         date_str = datetime.datetime.now().strftime('_%H_%M_%d_%b_%Y')
         self.df.to_csv('logs/summary_' + alg + '_' + str(self.nagents) + date_str + '.csv', sep='\t', encoding='utf-8',
