@@ -60,8 +60,12 @@ def process_df(filename):
     print(sum_df)
     print(sum_df.describe())
 
-    new_file = 'graph_data/'+filename[5:]
-    sum_df.to_csv(new_file, encoding='utf-8')
+    new_file = 'graph_data/'+filename[5:-4]+'_'
+    # sum_df.to_csv(new_file, encoding='utf-8')
+    for map in maps:
+        print('---- Saving '+map )
+        temp = sum_df[sum_df['Map']== map]
+        temp.to_csv(new_file+map+'.csv', encoding='utf-8')
 
 if __name__ == "__main__":
     filename = get_options(debug=True)
