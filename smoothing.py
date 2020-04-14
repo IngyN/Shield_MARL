@@ -44,14 +44,14 @@ def process_df(filename):
     row['Shield'] = df['Shield'].iloc[0]
     row['Grid'] = 1 if 'grid' in filename else 0
 
-    for map in maps:
+    for m, map in enumerate(maps):
         row['Map'] = map
 
         for e in range(num_episodes):
             for col in data_cols:
                 sum = 0
                 for i in range(num_iterations):
-                    sum += df[col].iloc[e + i * num_episodes]
+                    sum += df[col].iloc[e + i * num_episodes + (num_episodes*num_iterations)*m]
 
                 row[col] = sum / 10.0
 
