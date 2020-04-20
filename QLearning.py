@@ -31,7 +31,7 @@ class QLearning:
         self.qvalues = np.zeros([self.map_dim[0], self.map_dim[1], self.nactions])
 
     def run(self, env, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, save=False, N=10,
-            epsilon=0.8):
+            epsilon=0.8, c_cost= 10):
 
         alpha_index = 1
         self.discount = discount
@@ -57,7 +57,7 @@ class QLearning:
                     action = self.action_selection(self.qvalues[pos[0]][pos[1]], epsilon=epsilon)
                 else:
                     action = self.action_selection(self.qvalues[pos[0]][pos[1]], epsilon=0)
-                obs, rew, _, done = env.step([action])
+                obs, rew, _, done = env.step([action], collision_cost=c_cost)
 
                 if save:
                     index = hist[pos[0]][pos[1]][action][-1]

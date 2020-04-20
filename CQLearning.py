@@ -65,7 +65,7 @@ class CQLearning:
         self.__init__(self.map_name, self.nagents, self.nactions, self.grid)
 
     # Initialize the local q-values using Q-learning for each agent as well as rewards history W1.
-    def initialize_qvalues(self, step_max=250, episode_max=200):
+    def initialize_qvalues(self, step_max=250, episode_max=200, c_cost=10):
         if not self.grid:
             single_env = GridEnv(nagents=1, map_name=self.map_name)
         else:
@@ -79,7 +79,7 @@ class CQLearning:
             single_env.set_targets(self.targets[a])
             # print('i:', a,'start :', self.start[a], ' - target: ', self.targets[a])
             qval, hist = singleQL.run(single_env, step_max=step_max, episode_max=episode_max, discount=0.9,
-                                      debug=False, save=True, N=self.nsaved, epsilon=0.9)
+                                      debug=False, save=True, N=self.nsaved, epsilon=0.9,c_cost=c_cost)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
 
@@ -330,7 +330,7 @@ class CQLearning:
 
     # non shielded running of the algorithm
     def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False,
-            grid=False, fair=False, start_ep=1):
+            grid=False, fair=False, start_ep=1, c_cost=10):
 
         alpha_index = 1
         self.discount = discount
@@ -392,7 +392,7 @@ class CQLearning:
                             interference[idx][e] += 1
 
                 # update environment and retrieve rewards:
-                obs, rew, info, done = self.env.step(actions, noop=True)  # sample rewards and new states
+                obs, rew, info, done = self.env.step(actions, noop=True, collision_cost=c_cost)  # sample rewards and new states
                 acc_rew[e] += rew
                 collision[e] += info['collisions']
                 if debug:
@@ -401,7 +401,7 @@ class CQLearning:
                 if shielding:  # punish pre_actions that were changed extra.
                     if not np.all(punish == False):
                         rew_shield = deepcopy(rew)
-                        rew_shield[punish] = -10
+                        rew_shield[punish] = -c_cost
                         self.update_W(pos, pre_actions, rew_shield)
                         self.update(pos, obs, rew_shield, pre_actions)
 
