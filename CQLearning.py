@@ -178,7 +178,7 @@ class CQLearning:
                 if not found:
                     self.joint_marks[i][self.mark_index[i]] = temp
 
-            if self.marks[i][states[i][0]][states[i][1]] == 0:
+            if self.marks[i][states[i][0]][states[i][1]] == 0 or self.env.goal_flag[i]:
                 # if marked as safe -> do not update local
                 pass
 
@@ -255,22 +255,23 @@ class CQLearning:
     def update_W(self, pos, actions, rew):
 
         for i in range(self.nagents):
-            p = pos[i]
-            index = self.W1[i][p[0]][p[1]][actions[i]][-1]
-            index2 = self.W2[i][p[0]][p[1]][actions[i]][-1]
-            if np.isnan(index):  # check if never updated
-                index = 0
-            nextval = self.W1[i][p[0]][p[1]][actions[i]][int(index)]
+            if not self.env.goal_flag[i]:
+                p = pos[i]
+                index = self.W1[i][p[0]][p[1]][actions[i]][-1]
+                index2 = self.W2[i][p[0]][p[1]][actions[i]][-1]
+                if np.isnan(index):  # check if never updated
+                    index = 0
+                nextval = self.W1[i][p[0]][p[1]][actions[i]][int(index)]
 
-            if np.isnan(nextval):  # check if there are still spaces left
-                self.W1[i][p[0]][p[1]][actions[i]][int(index)] = rew[i]
-                self.W1[i][p[0]][p[1]][actions[i]][-1] = (index + 1) % self.nsaved
+                if np.isnan(nextval):  # check if there are still spaces left
+                    self.W1[i][p[0]][p[1]][actions[i]][int(index)] = rew[i]
+                    self.W1[i][p[0]][p[1]][actions[i]][-1] = (index + 1) % self.nsaved
 
-            else:
-                if np.isnan(index2):  # add to W2
-                    index2 = 0
-                self.W2[i][p[0]][p[1]][actions[i]][int(index2)] = rew[i]
-                self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
+                else:
+                    if np.isnan(index2):  # add to W2
+                        index2 = 0
+                    self.W2[i][p[0]][p[1]][actions[i]][int(index2)] = rew[i]
+                    self.W2[i][p[0]][p[1]][actions[i]][-1] = (index2 + 1) % self.nsaved
 
     def reset_W(self):
         self.W2 = deepcopy(self.W1)
@@ -278,7 +279,7 @@ class CQLearning:
     def get_recommended_training_vars(self):  # save recommended training vars.
         # joint :
         step_max = 500
-        episode_max = 1500
+        episode_max = 2000
 
         if self.map_name == 'example':
             # step_max = 500
@@ -318,13 +319,13 @@ class CQLearning:
 
     def load_shield(self, grid=False, fair=False):
         if not grid:
-            dir = 'shields/collision_' + self.map_name + '_' + str(self.nagents) + '_agents.shield'
+            dir = 'shields/collision_' + self.map_name + '_2_agents.shield'
             self.shield = Shield(self.nagents, start=self.start, file=dir)
         else:
             if fair:
-                dir = self.map_name + '/' + self.map_name + '_' + str(self.nagents) + '_agents_fair'
+                dir = self.map_name + '/' + self.map_name + '_2_agents_fair'
             else:
-                dir = self.map_name + '/' + self.map_name + '_' + str(self.nagents) + '_agents'
+                dir = self.map_name + '/' + self.map_name + '_2_agents'
 
             self.shield = GridShield(self.env, self.nagents, start=self.start, file=dir)
 
@@ -392,11 +393,12 @@ class CQLearning:
                             interference[idx][e] += 1
 
                 # update environment and retrieve rewards:
-                obs, rew, info, done = self.env.step(actions, noop=True, collision_cost=c_cost)  # sample rewards and new states
+                obs, rew, info, done = self.env.step(actions, noop=False, collision_cost=c_cost)  # sample rewards and new states
                 acc_rew[e] += rew
                 collision[e] += info['collisions']
                 if debug:
-                    print(self.shield.current_state,' - pre_a: ', pre_actions,' - a:', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten())
+                    print('pre_a: ', pre_actions,' - a:', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
+                          '- a pos: ', self.shield.agent_pos.flatten(),' - shield s: ', self.shield.current_state)
 
                 if shielding:  # punish pre_actions that were changed extra.
                     if not np.all(punish == False):
@@ -425,7 +427,7 @@ def full_test(shielding=False):
     steps_train = 500
     steps_test = 50
     ep_test = 10
-    cq = CQLearning(map_name='ISR', nagents=2, grid=True)
+    cq = CQLearning(map_name='ISR', nagents=3, grid=True)
     # MIT
     # ep_train = 500
     # steps_train = 500

@@ -116,10 +116,11 @@ class GridShield:
         desired = np.zeros([self.nagents, 2], dtype=int)  # desired coordinates
         shield_idx = np.ones([self.nagents, 2]) * -1  # desired agent index in shield
         oob = np.zeros([self.nagents])
+        obs = np.zeros([self.nagents])
 
         # update which agents are in which shields
         for i in range(self.nagents):
-            desired[i], oob[i] = env.get_next_state(pos[i], actions[i], goal_flag[i])
+            desired[i], oob[i], obs[i] = env.get_next_state(pos[i], actions[i], goal_flag[i])
             pos_shield[i] = self.smap[pos[i][0]][pos[i][1]]
 
             if not goal_flag[i]:
@@ -265,7 +266,7 @@ class GridShield:
 
         self.prev_pos = deepcopy(self.agent_pos)
         for i in range(self.nagents):
-            if act[i] and not oob[i]:
+            if act[i] and not oob[i] and not obs[i]:
                 self.agent_pos[i] = [shield_idx[i][1], desired_shield[i]]
 
         # act says which ones need to be changed
