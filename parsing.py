@@ -4,8 +4,8 @@ import sys, getopt
 def get_options(debug=False):
     opts, args = getopt.getopt(
         sys.argv[1:],
-        'n:p:i:d:s:g:f:e:',
-        ['nagents', 'shielding', 'iterations', 'display', 'save', 'grid', 'fair', 'extra'],
+        'n:p:i:d:s:g:f:e:c:r',
+        ['nagents', 'shielding', 'iterations', 'display', 'save', 'grid', 'fair', 'extra', 'conv', 'rew'],
     )
 
     agents = 2
@@ -16,6 +16,8 @@ def get_options(debug=False):
     grid = False
     fair = False
     extra = None
+    conv = True
+    coll_cost = 30
 
     for opt, arg in opts:
         if opt in ('-n', '--nagents'):
@@ -57,11 +59,20 @@ def get_options(debug=False):
             if debug:
                 print(opt + ':' + arg + ':')
             extra = str(arg)
+
+        elif opt in ('-c', '--conv'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            conv = bool(int(arg))
+
+        elif opt in ('-r', '--rew'):
+            coll_cost = int(arg)
+
         else:
             if debug:
                 print('invalid')
 
-    return agents, shielding, iterations, display, save, grid, fair, extra
+    return agents, shielding, iterations, display, save, grid, fair, extra, conv, coll_cost
 
 
 if __name__ == "__main__":

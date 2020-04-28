@@ -279,7 +279,7 @@ class CQLearning:
     def get_recommended_training_vars(self):  # save recommended training vars.
         # joint :
         step_max = 500
-        episode_max = 2000
+        episode_max = 1500
 
         if self.map_name == 'example':
             # step_max = 500
@@ -427,7 +427,7 @@ def full_test(shielding=False):
     steps_train = 500
     steps_test = 50
     ep_test = 10
-    cq = CQLearning(map_name='ISR', nagents=3, grid=True)
+    cq = CQLearning(map_name='example', nagents=2, grid=True)
     # MIT
     # ep_train = 500
     # steps_train = 500
