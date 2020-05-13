@@ -38,7 +38,7 @@ class GridShield:
             sh_ind = self.smap[start[i][0]][start[i][1]]
             self.agent_pos[i][1] = sh_ind
 
-        print(self.smap)
+        # print(self.smap)
         # find the start state for each shield.
         for sh in range(self.nshields):
             ag = np.where(self.agent_pos[:, 1] == sh)[0]

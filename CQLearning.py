@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 
 class CQLearning:
-    def __init__(self, map_name='example', nagents=2, nactions=5, grid=False):
+    def __init__(self, map_name='example', nagents=2, nactions=5, grid=False, alpha=1, disc=0.9):
         self.nagents = nagents
         self.nactions = nactions
         self.map_name = map_name
@@ -24,8 +24,8 @@ class CQLearning:
             self.env = GridEnv(nagents=nagents, map_name=map_name, norender=False, padding=True)
         self.targets = self.env.targets
         self.start = self.env.start_pos
-        self.alpha = 1
-        self.discount = 0.9
+        self.alpha = alpha
+        self.discount = disc
 
         # individual/local info
         self.qvalues = np.zeros([nagents, self.env.nrows, self.env.ncols, nactions])
@@ -89,7 +89,7 @@ class CQLearning:
     def greedy_select(self, qval, epsilon=0.4):
         flag = random.randint(0, 99) / 100
         if flag >= epsilon or epsilon == 0.0:
-            if np.count_nonzero(qval) < 0.5 * self.nactions:  # if qval is empty, choose randomly
+            if np.count_nonzero(qval) < 0.2 * self.nactions:  # if qval is empty, choose randomly
                 action = random.randint(0, self.nactions - 1)
             else:
                 action = np.argmax(qval)  # choose from qvalues
@@ -397,8 +397,12 @@ class CQLearning:
                 acc_rew[e] += rew
                 collision[e] += info['collisions']
                 if debug:
-                    print('pre_a: ', pre_actions,' - a:', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
+                    if grid:
+                        print('pre_a: ', pre_actions,' - a:', actions, ' - pos: ', pos.flatten(), ' - obs: ', obs.flatten(),
                           '- a pos: ', self.shield.agent_pos.flatten(),' - shield s: ', self.shield.current_state)
+                    else:
+                        print('pre_a: ', pre_actions, ' - a:', actions, ' - pos: ', pos.flatten(), ' - obs: ',
+                              obs.flatten(), ' - shield s: ', self.shield.current_state)
 
                 if shielding:  # punish pre_actions that were changed extra.
                     if not np.all(punish == False):
@@ -427,7 +431,7 @@ def full_test(shielding=False):
     steps_train = 500
     steps_test = 50
     ep_test = 10
-    cq = CQLearning(map_name='example', nagents=2, grid=True)
+    cq = CQLearning(map_name='ISR', nagents=2)
     # MIT
     # ep_train = 500
     # steps_train = 500
@@ -435,13 +439,13 @@ def full_test(shielding=False):
     # ep_test = 10
     cq.initialize_qvalues(step_max=steps_train, episode_max=ep_train)
 
-    s, acc, coll, inter = cq.run(step_max=steps_train, episode_max=ep_train, debug=True, shielding=shielding, grid=True)
+    s, acc, coll, inter = cq.run(step_max=steps_train, episode_max=ep_train, debug=True, shielding=shielding)
     print('steps train: \n', s)
     print('coll train: \n', coll)
     if shielding:
         print('inter train: \n', inter)
 
-    s2, _, _, _ = cq.run(step_max=steps_test, episode_max=ep_test, testing=True, debug=True, shielding=shielding, grid=True)
+    s2, _, _, _ = cq.run(step_max=steps_test, episode_max=ep_test, testing=True, debug=True, shielding=shielding)
     print('steps test: \n', s2)
 
 

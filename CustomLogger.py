@@ -63,6 +63,7 @@ class CustomLogger:
         entry[self.cols[3]] = ep_train
         entry[self.cols[4]] = sum_steps / (ep_train * iterations)
         entry[self.cols[5]] = sum_coll / (ep_train * iterations)
+        entry['total_coll'] = sum_coll / iterations
 
         cur_ind = 6
         for i in range(self.nagents):
@@ -87,6 +88,7 @@ class CustomLogger:
         entry[self.cols[cur_ind]] = ep_test
         entry[self.cols[cur_ind + 1]] = sum_steps / (ep_test * iterations)
         entry[self.cols[cur_ind + 2]] = sum_coll / (ep_test * iterations)
+        entry['total_coll_test'] = sum_coll / (iterations)
 
         cur_ind = cur_ind + 3
         for i in range(self.nagents):
@@ -148,6 +150,15 @@ class CustomLogger:
 
         if extra is not None:
             alg = alg + '_' + extra + '_'
+
+        temp = list(self.df.columns.values)
+
+        cols_to_print = [temp[0]]+ temp[2:8] + temp[10:14] + temp[16:]
+
+
+        #print(cols_to_print)
+
+        print(self.df[cols_to_print])
 
         date_str = datetime.datetime.now().strftime('_%H_%M_%d_%b_%Y')
         self.df.to_csv('logs/summary_' + alg + '_' + str(self.nagents) + date_str + '.csv', sep='\t', encoding='utf-8',

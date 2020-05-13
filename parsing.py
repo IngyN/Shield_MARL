@@ -1,11 +1,14 @@
 import sys, getopt
 
+''
+
 
 def get_options(debug=False):
     opts, args = getopt.getopt(
         sys.argv[1:],
-        'n:p:i:d:s:g:f:e:c:r',
-        ['nagents', 'shielding', 'iterations', 'display', 'save', 'grid', 'fair', 'extra', 'conv', 'rew'],
+        'n:p:i:t:d:s:g:f:e:r:a:d:m:q:c:x:y:z:h:',
+        ['nagents', 'shielding', 'iterations', 'episodes', 'display', 'save', 'grid', 'fair', 'extra', 'rew',
+         'alpha', 'disc', 'd_max', 't_thresh', 'c_thresh', 'c_max', 'start_c', 'delta', 'nsaved'],
     )
 
     agents = 2
@@ -16,8 +19,17 @@ def get_options(debug=False):
     grid = False
     fair = False
     extra = None
-    conv = True
     coll_cost = 30
+    alpha = 1
+    discount = 0.9
+    episodes = None
+    d_max = 50
+    t_thresh = 0.35
+    c_thresh = 1
+    c_max = 50
+    start_c = 20
+    delta = 2
+    nsaved = 5
 
     for opt, arg in opts:
         if opt in ('-n', '--nagents'):
@@ -60,19 +72,65 @@ def get_options(debug=False):
                 print(opt + ':' + arg + ':')
             extra = str(arg)
 
-        elif opt in ('-c', '--conv'):
-            if debug:
-                print(opt + ':' + arg + ':')
-            conv = bool(int(arg))
-
         elif opt in ('-r', '--rew'):
             coll_cost = int(arg)
+
+        elif opt in ('-a', '--alpha'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            alpha = float(arg)
+
+        elif opt in ('-d', '--disc'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            discount = float(arg)
+
+        elif opt in ('-t', '--episodes'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            episodes = int(arg)
+
+        elif opt in ('-m', '--d_max'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            d_max = int(arg)
+
+        elif opt in ('-q', '--t_thresh'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            t_thresh = int(arg)
+
+        elif opt in ('-c', '--c_thresh'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            c_thresh = int(arg)
+
+        elif opt in ('-x', '--c_max'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            c_max = int(arg)
+
+        elif opt in ('-y', '--start_c'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            start_c = int(arg)
+
+        elif opt in ('-z', '--delta'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            delta = int(arg)
+
+        elif opt in ('-h', '--nsaved'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            nsaved = int(arg)
 
         else:
             if debug:
                 print('invalid')
 
-    return agents, shielding, iterations, display, save, grid, fair, extra, conv, coll_cost
+    return agents, shielding, iterations, display, save, grid, fair, extra, coll_cost, alpha, discount, episodes, d_max,\
+           t_thresh, c_thresh, c_max, start_c, delta, nsaved
 
 
 if __name__ == "__main__":
