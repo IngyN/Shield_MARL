@@ -14,7 +14,7 @@ class Shield:
         found = self._find_start_state(start)
         if found:
             self.current_state = self.start_state
-            print('Start state = ', self.start_state)
+            # print('Start state = ', self.start_state)
         else:
             print('Error finding start state!!! ')
             exit(1)

@@ -52,15 +52,15 @@ for m in map_names:
     test_data = []
     done = False
     i = 0
-
+    print('map : ', m)
     while not done:
-        print("\n *************************** map : ",m," iteration ", i+1, "/", iterations, "**************************")
+        # print("\n *************************** map : ",m," iteration ", i+1, "/", iterations, "**************************")
         cq.initialize_qvalues(step_max=i_step_max, episode_max=i_episode_max, c_cost=collision_cost)
 
         s, acc, coll, inter = cq.run(step_max=step_max, episode_max=episode_max,
                                      debug=False, shielding=shielding, grid=grid, fair=fair, c_cost=collision_cost)
 
-        print('  ---- Conv : ', np.mean(acc[-last:]))
+        # print('  ---- Conv : ', np.mean(acc[-last:]))
 
         convs[m] = convs[m] + [np.mean(acc[-last:])]
 
