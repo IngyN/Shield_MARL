@@ -35,6 +35,92 @@ class CustomLogger:
         self.cols.append(self.raw_ext)
         self.raw_df = pd.DataFrame(columns=self.raw_cols)
 
+    # add entries for QL versions
+    def log_results_QL(self, map, test_data, train_data, iterations):
+        entry = {}
+
+        entry['Map'] = map
+        entry[self.cols[2]] = iterations
+        ep_train = train_data[0]['episodes']
+        ep_test = test_data[0]['episodes']
+
+        # aggregate data training
+        sum_steps = 0
+        sum_coll = 0
+
+        for it in range(iterations):
+            sum_steps += np.sum(train_data[it]['steps'])
+            sum_coll += np.sum(train_data[it]['collisions'])
+
+        # train data
+        entry[self.cols[3]] = ep_train
+        entry[self.cols[4]] = sum_steps / (ep_train * iterations)
+        entry[self.cols[5]] = sum_coll / (ep_train * iterations)
+        entry['total_coll'] = sum_coll / iterations
+
+        cur_ind = 6
+        for i in range(self.nagents):
+            cur_ind += 2
+
+        # aggregate data testing
+        sum_steps = 0
+        sum_coll = 0
+        sum_acc = np.zeros([self.nagents])
+        sum_inter = np.zeros([self.nagents])
+
+        for it in range(iterations):
+            sum_steps += np.sum(test_data[it]['steps'])
+            sum_coll += np.sum(test_data[it]['collisions'])
+
+        # train data
+        entry[self.cols[cur_ind]] = ep_test
+        entry[self.cols[cur_ind + 1]] = sum_steps / (ep_test * iterations)
+        entry[self.cols[cur_ind + 2]] = sum_coll / (ep_test * iterations)
+        entry['total_coll_test'] = sum_coll / (iterations)
+
+        cur_ind = cur_ind + 3
+        for i in range(self.nagents):
+            cur_ind += 2
+
+        self.df = self.df.append(entry, ignore_index=True)
+
+        raw_entry = {}
+        raw_entry['Map'] = map
+        raw_entry[self.raw_cols[2]] = iterations
+        raw_entry[self.raw_cols[3]] = ep_train
+        train_steps = train_data[0]['steps']
+        test_steps = test_data[0]['steps']
+
+        # save raw
+        for it in range(iterations):
+            for ep in range(ep_train):
+                cur_ind = 4
+                raw_entry[self.raw_cols[cur_ind]] = train_data[it]['steps'][ep]
+                cur_ind += 1
+                raw_entry[self.raw_cols[cur_ind]] = train_data[it]['collisions'][ep]
+                for i in range(self.nagents):
+                    cur_ind += 2
+
+                cur_ind += 1
+                raw_entry[self.raw_cols[cur_ind]] = ep_test
+                cur_ind += 1
+                if ep < ep_test:
+                    raw_entry[self.raw_cols[cur_ind]] = test_data[it]['steps'][ep]
+                    raw_entry[self.raw_cols[cur_ind + 1]] = test_data[it]['collisions'][ep]
+                    cur_ind += 1
+                    for i in range(self.nagents):
+                        cur_ind += 2
+                else:
+                    raw_entry[self.raw_cols[cur_ind]] = np.nan
+                    raw_entry[self.raw_cols[cur_ind + 1]] = np.nan
+                    cur_ind += 1
+                    for i in range(self.nagents):
+                        raw_entry[self.raw_cols[cur_ind + 1]] = np.nan
+                        raw_entry[self.raw_cols[cur_ind + 2]] = np.nan
+                        cur_ind += 2
+
+                self.raw_df = self.raw_df.append(raw_entry, ignore_index=True)
+
     # construct a row and add it to the data frame
     def log_results(self, map, test_data, train_data, shielding, iterations, save=False, display=False):
 
