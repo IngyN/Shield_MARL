@@ -6,7 +6,7 @@ import sys, getopt
 def get_options(debug=False):
     opts, args = getopt.getopt(
         sys.argv[1:],
-        'n:p:i:t:d:s:g:f:e:r:a:d:m:q:c:x:y:z:h:',
+        'n:p:i:t:d:s:g:f:e:r:a:w:m:q:c:x:y:z:h:',
         ['nagents', 'shielding', 'iterations', 'episodes', 'display', 'save', 'grid', 'fair', 'extra', 'rew',
          'alpha', 'disc', 'd_max', 't_thresh', 'c_thresh', 'c_max', 'start_c', 'delta', 'nsaved'],
     )
@@ -20,7 +20,7 @@ def get_options(debug=False):
     fair = False
     extra = None
     coll_cost = 30
-    alpha = 1
+    alpha = 0.9
     discount = 0.9
     episodes = None
     d_max = 50
@@ -80,7 +80,7 @@ def get_options(debug=False):
                 print(opt + ':' + arg + ':')
             alpha = float(arg)
 
-        elif opt in ('-d', '--disc'):
+        elif opt in ('-w', '--disc'):
             if debug:
                 print(opt + ':' + arg + ':')
             discount = float(arg)

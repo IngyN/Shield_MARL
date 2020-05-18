@@ -1,8 +1,8 @@
-python smoothing.py -f logs/raw_CQ+shield_hyper_alpha_6__2_19_21_13_May_2020.csv
-python smoothing.py -f logs/raw_CQ+shield_hyper_alpha_7__2_22_16_13_May_2020.csv
-python smoothing.py -f logs/raw_CQ+shield_hyper_alpha_8__2_01_25_14_May_2020.csv
-python smoothing.py -f logs/raw_CQ+shield_hyper_alpha_9__2_04_19_14_May_2020.csv
-python smoothing.py -f logs/raw_CQ+shield_hyper_alpha_10__2_07_18_14_May_2020.csv
+python smoothing.py -f logs/raw_CQ+shield_hyper_disc_6__2_23_15_17_May_2020.csv
+python smoothing.py -f logs/raw_CQ+shield_hyper_disc_7__2_02_25_18_May_2020.csv
+python smoothing.py -f logs/raw_CQ+shield_hyper_disc_8__2_05_37_18_May_2020.csv
+python smoothing.py -f logs/raw_CQ+shield_hyper_disc_9__2_08_47_18_May_2020.csv
+python smoothing.py -f logs/raw_CQ+shield_hyper_disc_10__2_11_49_18_May_2020.csv
 
 
 
