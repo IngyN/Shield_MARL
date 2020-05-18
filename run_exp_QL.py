@@ -40,11 +40,11 @@ def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, t
     steps = np.zeros([episode_max], dtype=int)
     coll = np.zeros([episode_max], dtype=int)
     action = np.zeros([nagents], dtype=int)
-
+    # print(action)
     stop = False
     for e in range(episode_max):
         env.reset()
-        pos = deepcopy(env.pos[0])
+        pos = deepcopy(env.pos)
 
         for s in range(step_max):
 
@@ -54,6 +54,7 @@ def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, t
             for a in range(nagents):
                 qls[a].alpha = alpha_index / (0.1 * s + 0.5)
                 if not testing:
+                    # print(pos[a])
                     action[a] = qls[a].action_selection(qls[a].qvalues[pos[a][0]][pos[a][1]], epsilon=epsilon)
                 else:
                     action[a] = qls[a].action_selection(qls[a].qvalues[pos[a][0]][pos[a][1]], epsilon=0)
@@ -65,9 +66,9 @@ def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, t
                 if not testing:
                     qls[a].update(pos[a], obs[a], rew[a], action[a], True)
 
-            pos = deepcopy(obs[0])
+            pos = deepcopy(obs)
 
-            if done:
+            if np.all(done):
                 steps[e] = s
                 if debug:
                     env.render(episode=e + 1)
@@ -90,11 +91,13 @@ def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, t
 for m in map_names:
 
     env = GridEnv(nagents=agents, map_name=m, norender=False)  # set up ma environment
-    qls = np.array([agents], dtype=QLearning)
+    qls = []
+    # print(qls)
     # initialize array of QL agents.
     for i in range(agents):
-        qls[i] = QLearning(map_size=[env.nrows, env.ncols])
-
+        temp = QLearning(map_size=[env.nrows, env.ncols])
+        qls.append(temp)
+    # print(qls)
     i_step_max = 500
     i_episode_max = 1200
 
