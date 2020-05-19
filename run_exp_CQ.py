@@ -34,14 +34,9 @@ def format_data(steps, acc, coll, inter, ep):
 # Loop over all maps
 for m in map_names:
 
-    cq = CQLearning(map_name=m, nagents=agents, grid=grid, alpha=alpha, disc=discount)
-    cq.dangerous_max = d_max
-    cq.test_threshold = t_thresh
-    cq.conf_threshold = c_thresh
-    cq.conf_max = c_max
-    cq.start_conf = start_c
-    cq.delta= delta
-    cq.nsaved = nsaved
+    cq = CQLearning(map_name=m, nagents=agents, grid=grid, alpha=alpha, disc=discount,
+                    d_max=d_max, t_thresh=t_thresh, c_thresh=c_thresh, c_max=c_max,
+                    start_c=start_c, d=delta, ns=nsaved)
 
     i_step_max, i_episode_max, step_max, episode_max = cq.get_recommended_training_vars()
 

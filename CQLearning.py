@@ -12,7 +12,8 @@ import matplotlib.pyplot as plt
 
 
 class CQLearning:
-    def __init__(self, map_name='example', nagents=2, nactions=5, grid=False, alpha=1, disc=0.9):
+    def __init__(self, map_name='example', nagents=2, nactions=5, grid=False, alpha=1, disc=0.9,
+                 d_max=50, t_thresh = 0.35, c_thresh = 1, c_max = 70, start_c = 20, d = 2, ns = 5):
         self.nagents = nagents
         self.nactions = nactions
         self.map_name = map_name
@@ -32,7 +33,7 @@ class CQLearning:
         self.marks = np.zeros([nagents, self.env.nrows, self.env.ncols], dtype=int)  # 0 = unmarked, 1= safe, 2= unsafe
 
         # Joint info
-        self.dangerous_max = 50
+        self.dangerous_max = d_max
         dims = [self.dangerous_max]
         dims.extend([self.env.nrows, self.env.ncols, self.nactions] * nagents)
         dims.append(1)
@@ -47,13 +48,13 @@ class CQLearning:
         self.joint_qvalues = np.zeros(dims)
 
         # t-test vars
-        self.test_threshold = 0.35
+        self.test_threshold = t_thresh
         self.test_threshold2 = 0.2
-        self.conf_threshold = 1
-        self.conf_max = 50
-        self.start_conf = 20
-        self.delta = 2  # buffer for checking if rk < mean(rewards)
-        self.nsaved = 5  # history for observed/expected rewards
+        self.conf_threshold = c_thresh
+        self.conf_max = c_max
+        self.start_conf = start_c
+        self.delta = d  # buffer for checking if rk < mean(rewards)
+        self.nsaved = ns  # history for observed/expected rewards
 
         # Rewards History
         self.W1 = np.ones([nagents, self.env.nrows, self.env.ncols, nactions,
@@ -62,7 +63,9 @@ class CQLearning:
                            self.nsaved + 1]) * np.nan  # nan vals were not initialized
 
     def reset(self):
-        self.__init__(self.map_name, self.nagents, self.nactions, self.grid)
+        self.__init__(self.map_name, self.nagents, self.nactions, self.grid, alpha=self.alpha, disc=self.discount,
+                      d_max=self.dangerous_max, t_thresh = self.test_threshold, c_thresh = self.conf_threshold,
+                      c_max = self.conf_max, start_c = self.start_conf, d = self.delta, ns = self.nsaved)
 
     # Initialize the local q-values using Q-learning for each agent as well as rewards history W1.
     def initialize_qvalues(self, step_max=250, episode_max=200, c_cost=10):

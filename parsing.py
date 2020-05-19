@@ -98,7 +98,7 @@ def get_options(debug=False):
         elif opt in ('-q', '--t_thresh'):
             if debug:
                 print(opt + ':' + arg + ':')
-            t_thresh = int(arg)
+            t_thresh = float(arg)
 
         elif opt in ('-c', '--c_thresh'):
             if debug:
