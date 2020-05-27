@@ -24,12 +24,12 @@ def get_options(debug=False):
     discount = 0.9
     episodes = None
     d_max = 50
-    t_thresh = 0.35
+    t_thresh = 0.1
     c_thresh = 1
     c_max = 70
     start_c = 20
     delta = 2
-    nsaved = 5
+    nsaved = 15
 
     for opt, arg in opts:
         if opt in ('-n', '--nagents'):
