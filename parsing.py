@@ -118,7 +118,7 @@ def get_options(debug=False):
         elif opt in ('-z', '--delta'):
             if debug:
                 print(opt + ':' + arg + ':')
-            delta = int(arg)
+            delta = float(arg)
 
         elif opt in ('-h', '--nsaved'):
             if debug:

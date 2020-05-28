@@ -292,7 +292,7 @@ class CQLearning:
         elif self.map_name == 'ISR':
             pass
         elif self.map_name == 'Pentagon':
-            pass
+            self.delta=2.5
         elif self.map_name == 'MIT':
             pass
             # step_max = 500
