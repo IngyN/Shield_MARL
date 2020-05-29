@@ -28,7 +28,7 @@ def get_options(debug=False):
     c_thresh = 1
     c_max = 70
     start_c = 20
-    delta = 2
+    delta = 1
     nsaved = 15
 
     for opt, arg in opts:
