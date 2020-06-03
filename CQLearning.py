@@ -68,7 +68,7 @@ class CQLearning:
                       c_max = self.conf_max, start_c = self.start_conf, d = self.delta, ns = self.nsaved)
 
     # Initialize the local q-values using Q-learning for each agent as well as rewards history W1.
-    def initialize_qvalues(self, step_max=250, episode_max=200, c_cost=10):
+    def initialize_qvalues(self, step_max=250, episode_max=200, noop=False, c_cost=10):
         if not self.grid:
             single_env = GridEnv(nagents=1, map_name=self.map_name)
         else:
@@ -82,7 +82,7 @@ class CQLearning:
             single_env.set_targets(self.targets[a])
             # print('i:', a,'start :', self.start[a], ' - target: ', self.targets[a])
             qval, hist = singleQL.run(single_env, step_max=step_max, episode_max=episode_max, discount=0.9,
-                                      debug=False, save=True, N=self.nsaved, epsilon=0.9,c_cost=c_cost)
+                                      debug=False,noop=noop, save=True, N=self.nsaved, epsilon=0.9,c_cost=c_cost)
             self.qvalues[a] = deepcopy(qval)
             self.W1[a] = deepcopy(hist)
 
@@ -333,7 +333,7 @@ class CQLearning:
             self.shield = GridShield(self.env, self.nagents, start=self.start, file=dir)
 
     # non shielded running of the algorithm
-    def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False,
+    def run(self, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False, shielding=False, noop = False,
             grid=False, fair=False, start_ep=1, c_cost=10):
 
         alpha_index = 1
@@ -396,7 +396,7 @@ class CQLearning:
                             interference[idx][e] += 1
 
                 # update environment and retrieve rewards:
-                obs, rew, info, done = self.env.step(actions, noop=False, collision_cost=c_cost)  # sample rewards and new states
+                obs, rew, info, done = self.env.step(actions, noop=noop, collision_cost=c_cost)  # sample rewards and new states
                 acc_rew[e] += rew
                 collision[e] += info['collisions']
                 if debug:

@@ -10,15 +10,16 @@ map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
 # map_names = ['Pentagon', 'MIT']
 
 agents, shielding, iterations, display, save, grid, fair, extra, collision_cost, alpha, discount, episodes , d_max,\
-           t_thresh, c_thresh, c_max, start_c, delta, nsaved = get_options()
+           t_thresh, c_thresh, c_max, start_c, delta, nsaved, noop = get_options()
 steps_test = 100
 ep_test = 10
 conv = False
 convs = dict.fromkeys(map_names, [])
 # collision_cost = 30
 last = 500
+# noop = True
 logger = CustomLogger(agents)
-print('Collision cost : ', collision_cost, ' - Shielding :', shielding)
+print('Collision cost : ', collision_cost, ' - Shielding :', shielding, ' - noop : ', noop)
 
 def format_data(steps, acc, coll, inter, ep):
     info = {}
@@ -50,9 +51,9 @@ for m in map_names:
     print('map : ', m)
     while not done:
         # print("\n *************************** map : ",m," iteration ", i+1, "/", iterations, "**************************")
-        cq.initialize_qvalues(step_max=i_step_max, episode_max=i_episode_max, c_cost=collision_cost)
+        cq.initialize_qvalues(step_max=i_step_max, episode_max=i_episode_max, c_cost=collision_cost, noop=noop)
 
-        s, acc, coll, inter = cq.run(step_max=step_max, episode_max=episode_max,
+        s, acc, coll, inter = cq.run(step_max=step_max, episode_max=episode_max, noop = noop,
                                      debug=False, shielding=shielding, grid=grid, fair=fair, c_cost=collision_cost)
 
         # print('  ---- Conv : ', np.mean(acc[-last:]))
@@ -63,7 +64,7 @@ for m in map_names:
         plot_v2(train_data_i, agents=agents, iteration=i + 1, map=m, test=False, shielding=shielding, save=save,
                 display=False)
 
-        s2, acc2, coll2, inter2 = cq.run(step_max=steps_test, episode_max=ep_test,
+        s2, acc2, coll2, inter2 = cq.run(step_max=steps_test, episode_max=ep_test, noop = noop,
                                          testing=True, debug=display, shielding=shielding, grid=grid, fair=fair, c_cost=collision_cost)
         test_data_i = format_data(s2, acc2, coll2, inter2, ep_test)
         plot_v2(test_data_i, agents=agents, iteration=i + 1, map=m, test=True, shielding=shielding, save=save,

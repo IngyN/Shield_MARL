@@ -6,9 +6,9 @@ import sys, getopt
 def get_options(debug=False):
     opts, args = getopt.getopt(
         sys.argv[1:],
-        'n:p:i:t:d:s:g:f:e:r:a:w:m:q:c:x:y:z:h:',
+        'n:p:i:t:d:s:g:f:e:r:a:w:m:q:c:x:y:z:h:u:',
         ['nagents', 'shielding', 'iterations', 'episodes', 'display', 'save', 'grid', 'fair', 'extra', 'rew',
-         'alpha', 'disc', 'd_max', 't_thresh', 'c_thresh', 'c_max', 'start_c', 'delta', 'nsaved'],
+         'alpha', 'disc', 'd_max', 't_thresh', 'c_thresh', 'c_max', 'start_c', 'delta', 'nsaved', 'noop'],
     )
 
     agents = 2
@@ -30,6 +30,7 @@ def get_options(debug=False):
     start_c = 20
     delta = 1
     nsaved = 15
+    noop = False
 
     for opt, arg in opts:
         if opt in ('-n', '--nagents'):
@@ -125,12 +126,16 @@ def get_options(debug=False):
                 print(opt + ':' + arg + ':')
             nsaved = int(arg)
 
+        elif opt in ('-u', '--noop'):
+            if debug:
+                print(opt + ':' + arg + ':')
+            noop = bool(int(arg))
         else:
             if debug:
                 print('invalid')
 
     return agents, shielding, iterations, display, save, grid, fair, extra, coll_cost, alpha, discount, episodes, d_max,\
-           t_thresh, c_thresh, c_max, start_c, delta, nsaved
+           t_thresh, c_thresh, c_max, start_c, delta, nsaved, noop
 
 
 if __name__ == "__main__":
