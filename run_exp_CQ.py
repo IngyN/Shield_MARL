@@ -19,7 +19,7 @@ convs = dict.fromkeys(map_names, [])
 last = 500
 # noop = True
 logger = CustomLogger(agents)
-print('Collision cost : ', collision_cost, ' - Shielding :', shielding, ' - noop : ', noop)
+print('Collision cost : ', collision_cost, ' - Shielding :', shielding, ' - noop : ', noop, '- grid: ', grid)
 
 def format_data(steps, acc, coll, inter, ep):
     info = {}
