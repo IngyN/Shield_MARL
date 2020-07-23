@@ -137,6 +137,31 @@ def get_options(debug=False):
     return agents, shielding, iterations, display, save, grid, fair, extra, coll_cost, alpha, discount, episodes, d_max,\
            t_thresh, c_thresh, c_max, start_c, delta, nsaved, noop
 
+def save_param(date_str, agents, shielding, iterations, display, save, grid, fair, extra, coll_cost, alpha, discount, episodes, d_max,\
+           t_thresh, c_thresh, c_max, start_c, delta, nsaved, noop):
+
+    file = 'params/'+date_str+'.txt'
+
+    f = open(file, 'w')
+
+    f.write(f'shielding '+str(shielding)+'\n')
+    f.write(f'iterations: {iterations} \n')
+    f.write(f'grid: {grid} \n')
+    f.write(f'fair: {fair} \n')
+    f.write(f'collision cost: {coll_cost} \n')
+    f.write(f'alpha: {alpha} \n')
+    f.write(f'discount: {discount} \n')
+    f.write(f'episodes: {episodes} \n')
+    f.write(f'd_max: {d_max} \n')
+    f.write(f't_thresh: {t_thresh} \n')
+    f.write(f'c_thresh: {c_thresh} \n')
+    f.write(f'c_max: {c_max} \n')
+    f.write(f'start_c: {start_c} \n')
+    f.write(f'delta: {delta} \n')
+    f.write(f'nsaved: {nsaved} \n')
+    f.write(f'noop: {noop} \n')
+
+    f.close()
 
 if __name__ == "__main__":
     print(get_options(debug=True))

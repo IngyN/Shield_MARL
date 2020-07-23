@@ -6,12 +6,12 @@ import numpy as np
 from gym_grid.envs import GridEnv
 from copy import deepcopy
 
-map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
+# map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
 # map_names = ['ISR', 'Pentagon', 'MIT', 'SUNY']
-# map_names = ['Pentagon', 'MIT']
+map_names = ['ISR', 'Pentagon']
 
 agents, shielding, iterations, display, save, grid, fair, extra, collision_cost, alpha, discount, episodes, d_max, \
-t_thresh, c_thresh, c_max, start_c, delta, nsaved = get_options()
+t_thresh, c_thresh, c_max, start_c, delta, nsaved, noop = get_options()
 steps_test = 100
 ep_test = 10
 conv = False
@@ -32,11 +32,13 @@ def format_data(steps, coll, ep):
 
 
 def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, testing=False, debug=False,
-              epsilon=0.8, c_cost=10):
+              epsilon=0.8, c_cost=10, noop=noop):
     alpha_index = 1
     for a in range(nagents):
         qls[a].discount = discount
     # print(pos)
+    coef = (-0.05 + epsilon) / episode_max
+    start_ep = 1
     steps = np.zeros([episode_max], dtype=int)
     coll = np.zeros([episode_max], dtype=int)
     action = np.zeros([nagents], dtype=int)
@@ -51,15 +53,16 @@ def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, t
             if debug:
                 env.render(episode=e + 1)
 
+            ep = start_ep - e * coef
             for a in range(nagents):
                 qls[a].alpha = alpha_index / (0.1 * s + 0.5)
                 if not testing:
                     # print(pos[a])
-                    action[a] = qls[a].action_selection(qls[a].qvalues[pos[a][0]][pos[a][1]], epsilon=epsilon)
+                    action[a] = qls[a].action_selection(qls[a].qvalues[pos[a][0]][pos[a][1]], epsilon=ep)
                 else:
-                    action[a] = qls[a].action_selection(qls[a].qvalues[pos[a][0]][pos[a][1]], epsilon=0)
+                    action[a] = qls[a].action_selection(qls[a].qvalues[pos[a][0]][pos[a][1]], epsilon=0.05)
 
-            obs, rew, info, done = env.step(action, noop=False, collision_cost=c_cost)
+            obs, rew, info, done = env.step(action, collision_cost=c_cost, noop=noop)
             coll[e] += info['collisions']
 
             for a in range(nagents):
@@ -75,14 +78,14 @@ def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, t
                 break
 
         steps[e] = s
-        if e > 80:
-            stop = True
-            for stop_step in range(80):
-                if steps[e] != steps[e - stop_step]:
-                    stop = False
-
-        if stop:
-            break
+        # if e > 80:
+        #     stop = True
+        #     for stop_step in range(80):
+        #         if steps[e] != steps[e - stop_step]:
+        #             stop = False
+        #
+        # if stop:
+        #     break
     # print(steps + 1)
     return steps, coll
 
@@ -94,7 +97,7 @@ for m in map_names:
     qls = []
     # print(qls)
     # initialize array of QL agents.
-    for i in range(agents):
+    for a in range(agents):
         temp = QLearning(map_size=[env.nrows, env.ncols])
         qls.append(temp)
     # print(qls)
@@ -113,12 +116,12 @@ for m in map_names:
         # print("\n *************************** map : ",m," iteration ", i+1, "/", iterations, "**************************")
 
         s, coll = run_joint(env=env, nagents=agents, qls=qls, step_max=i_step_max, episode_max=i_episode_max,
-                            discount=discount, c_cost=collision_cost)
+                            discount=discount, c_cost=collision_cost, noop=noop)
 
         train_data_i = format_data(s, coll, i_episode_max)
 
         s2, coll2 = run_joint(env, agents, qls, step_max=steps_test, episode_max=ep_test,
-                              discount=discount, c_cost=collision_cost, testing=True, debug=True)
+                              discount=discount, c_cost=collision_cost, noop=noop, testing=True, debug=False)
 
         test_data_i = format_data(s2, coll2, ep_test)
 
@@ -129,10 +132,10 @@ for m in map_names:
         if i >= iterations:
             done = True
 
-        for i in range(agents):
-            qls[i].reset()
+        for a in range(agents):
+            qls[a].reset()
 
     # Log information
-    logger.log_results_QL(m, test_data, train_data, shielding, iterations)
+    logger.log_results_QL(m, test_data, train_data, iterations)
 
 logger.save('QL', extra=extra)

@@ -252,3 +252,5 @@ class CustomLogger:
 
         self.raw_df.to_csv('logs/raw_' + alg + '_' + str(self.nagents) + date_str + '.csv', sep='\t', encoding='utf-8',
                            index=False)
+
+        return alg + '_' + str(self.nagents) + date_str
