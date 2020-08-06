@@ -1,13 +1,14 @@
 from CQLearning import CQLearning
 from plotting import plot_v2
-from parsing import get_options
+from parsing import get_options, save_param
 from CustomLogger import CustomLogger
 import numpy as np
 
 
-map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
+# map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
 # map_names = ['ISR', 'Pentagon', 'MIT', 'SUNY']
-# map_names = ['Pentagon', 'MIT']
+# map_names = ['ISR', 'Pentagon', 'MIT', 'SUNY']
+map_names=['MIT']
 
 agents, shielding, iterations, display, save, grid, fair, extra, collision_cost, alpha, discount, episodes , d_max,\
            t_thresh, c_thresh, c_max, start_c, delta, nsaved, noop = get_options()
@@ -19,7 +20,7 @@ convs = dict.fromkeys(map_names, [])
 last = 500
 # noop = True
 logger = CustomLogger(agents)
-print('Collision cost : ', collision_cost, ' - Shielding :', shielding, ' - noop : ', noop)
+print('Collision cost : ', collision_cost, ' - Shielding :', shielding, ' - noop : ', noop, '- grid: ', grid)
 
 def format_data(steps, acc, coll, inter, ep):
     info = {}
@@ -87,6 +88,10 @@ print('  ---- Convs : \n', convs)
 # print(logger.df)
 # print(logger.raw_df)
 if shielding:
-    logger.save('CQ+shield', grid=grid, fair=fair, extra=extra)
+    date_str=logger.save('CQ+shield', grid=grid, fair=fair, extra=extra)
 else:
-    logger.save('CQ', grid=grid, fair=fair, extra=extra)
+    date_str=logger.save('CQ', grid=grid, fair=fair, extra=extra)
+
+save_param(date_str,agents, shielding, iterations, display, save, grid, fair, extra, collision_cost, alpha, discount, episodes , d_max,\
+           t_thresh, c_thresh, c_max, start_c, delta, nsaved, noop)
+

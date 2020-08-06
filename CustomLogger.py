@@ -47,10 +47,13 @@ class CustomLogger:
         # aggregate data training
         sum_steps = 0
         sum_coll = 0
+        sum_acc = np.zeros([self.nagents])
 
         for it in range(iterations):
             sum_steps += np.sum(train_data[it]['steps'])
             sum_coll += np.sum(train_data[it]['collisions'])
+            for i in range(self.nagents):
+                sum_acc[i] += np.sum(train_data[it]['acc_rewards'][:, i])
 
         # train data
         entry[self.cols[3]] = ep_train
@@ -60,6 +63,7 @@ class CustomLogger:
 
         cur_ind = 6
         for i in range(self.nagents):
+            entry[self.cols[cur_ind]] = sum_acc[i] / (ep_train * iterations)
             cur_ind += 2
 
         # aggregate data testing
@@ -71,6 +75,8 @@ class CustomLogger:
         for it in range(iterations):
             sum_steps += np.sum(test_data[it]['steps'])
             sum_coll += np.sum(test_data[it]['collisions'])
+            for i in range(self.nagents):
+                sum_acc[i] += np.sum(test_data[it]['acc_rewards'][:, i])
 
         # train data
         entry[self.cols[cur_ind]] = ep_test
@@ -80,7 +86,9 @@ class CustomLogger:
 
         cur_ind = cur_ind + 3
         for i in range(self.nagents):
+            entry[self.cols[cur_ind]] = sum_acc[i] / (ep_test * iterations)
             cur_ind += 2
+
 
         self.df = self.df.append(entry, ignore_index=True)
 
@@ -99,6 +107,7 @@ class CustomLogger:
                 cur_ind += 1
                 raw_entry[self.raw_cols[cur_ind]] = train_data[it]['collisions'][ep]
                 for i in range(self.nagents):
+                    raw_entry[self.raw_cols[cur_ind + 1]] = train_data[it]['acc_rewards'][ep][i]
                     cur_ind += 2
 
                 cur_ind += 1
@@ -109,6 +118,7 @@ class CustomLogger:
                     raw_entry[self.raw_cols[cur_ind + 1]] = test_data[it]['collisions'][ep]
                     cur_ind += 1
                     for i in range(self.nagents):
+                        raw_entry[self.raw_cols[cur_ind + 1]] = test_data[it]['acc_rewards'][ep][i]
                         cur_ind += 2
                 else:
                     raw_entry[self.raw_cols[cur_ind]] = np.nan
@@ -252,3 +262,5 @@ class CustomLogger:
 
         self.raw_df.to_csv('logs/raw_' + alg + '_' + str(self.nagents) + date_str + '.csv', sep='\t', encoding='utf-8',
                            index=False)
+
+        return alg + '_' + str(self.nagents) + date_str
