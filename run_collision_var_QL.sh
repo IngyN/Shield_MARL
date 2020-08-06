@@ -1,17 +1,2 @@
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_0 -r 0 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_25 -r 25 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_50 -r 50 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_75 -r 75 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_100 -r 100 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_125 -r 125 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_150 -r 150 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_175 -r 175 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_200 -r 200 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_225 -r 225 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_250 -r 250 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_275 -r 275 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_300 -r 300 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_325 -r 325 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_350 -r 350 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_375 -r 375 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_400 -r 400 -t 1000
+python run_exp_QL.py -n 2 -i 10 -e run_table_info -r 30 -t 1200
+

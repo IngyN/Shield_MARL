@@ -1,17 +1,17 @@
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_0 -r 0 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_25 -r 25 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_50 -r 50 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_75 -r 75 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_100 -r 100 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_125 -r 125 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_150 -r 150 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_175 -r 175 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_200 -r 200 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_225 -r 225 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_250 -r 250 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_275 -r 275 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_300 -r 300 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_325 -r 325 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_350 -r 350 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_375 -r 375 -t 1000
-python run_exp_QL.py -n 2 -i 10 -e rerun_IP_400 -r 400 -t 1000
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 0 -e coll_cost_IP_CQ_0
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 25 -e coll_cost_IP_CQ_25
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 50 -e coll_cost_IP_CQ_50
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 75 -e coll_cost_IP_CQ_75
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 100 -e coll_cost_IP_CQ_100
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 125 -e coll_cost_IP_CQ_125
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 150 -e coll_cost_IP_CQ_150
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 175 -e coll_cost_IP_CQ_175
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 200 -e coll_cost_IP_CQ_200
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 225 -e coll_cost_IP_CQ_225
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 250 -e coll_cost_IP_CQ_250
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 275 -e coll_cost_IP_CQ_275
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 300 -e coll_cost_IP_CQ_300
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 325 -e coll_cost_IP_CQ_325
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 350 -e coll_cost_IP_CQ_350
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 375 -e coll_cost_IP_CQ_375
+python run_exp_CQ.py -n 2 -i 10 -h 5 -q 0.35 -z 3 -t 1000 -r 400 -e coll_cost_IP_CQ_400

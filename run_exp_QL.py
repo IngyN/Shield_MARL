@@ -7,8 +7,8 @@ from gym_grid.envs import GridEnv
 from copy import deepcopy
 
 # map_names = ['example', 'ISR', 'Pentagon', 'MIT', 'SUNY']
-# map_names = ['ISR', 'Pentagon', 'MIT', 'SUNY']
-map_names = ['ISR', 'Pentagon']
+map_names = ['ISR', 'Pentagon', 'MIT', 'SUNY']
+# map_names = ['ISR', 'Pentagon']
 
 agents, shielding, iterations, display, save, grid, fair, extra, collision_cost, alpha, discount, episodes, d_max, \
 t_thresh, c_thresh, c_max, start_c, delta, nsaved, noop = get_options()
@@ -22,11 +22,12 @@ logger = CustomLogger(agents)
 print('Collision cost : ', collision_cost, ' - Shielding :', shielding)
 
 
-def format_data(steps, coll, ep):
+def format_data(steps, coll, ep, acc):
     info = {}
     info['steps'] = steps
     info['collisions'] = coll
     info['episodes'] = ep
+    info['acc_rewards'] = acc
 
     return info
 
@@ -42,6 +43,8 @@ def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, t
     steps = np.zeros([episode_max], dtype=int)
     coll = np.zeros([episode_max], dtype=int)
     action = np.zeros([nagents], dtype=int)
+    acc_rew = np.zeros([episode_max, nagents])
+
     # print(action)
     stop = False
     for e in range(episode_max):
@@ -64,6 +67,7 @@ def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, t
 
             obs, rew, info, done = env.step(action, collision_cost=c_cost, noop=noop)
             coll[e] += info['collisions']
+            acc_rew[e] += rew
 
             for a in range(nagents):
                 if not testing:
@@ -87,7 +91,7 @@ def run_joint(env, nagents, qls, step_max=500, episode_max=2000, discount=0.9, t
         # if stop:
         #     break
     # print(steps + 1)
-    return steps, coll
+    return steps, coll, acc_rew
 
 
 # Loop over all maps
@@ -102,7 +106,7 @@ for m in map_names:
         qls.append(temp)
     # print(qls)
     i_step_max = 500
-    i_episode_max = 1200
+    i_episode_max = 1000
 
     if episodes is not None:
         i_episode_max = episodes
@@ -115,15 +119,15 @@ for m in map_names:
     while not done:
         # print("\n *************************** map : ",m," iteration ", i+1, "/", iterations, "**************************")
 
-        s, coll = run_joint(env=env, nagents=agents, qls=qls, step_max=i_step_max, episode_max=i_episode_max,
+        s, coll, acc = run_joint(env=env, nagents=agents, qls=qls, step_max=i_step_max, episode_max=i_episode_max,
                             discount=discount, c_cost=collision_cost, noop=noop)
 
-        train_data_i = format_data(s, coll, i_episode_max)
+        train_data_i = format_data(s, coll, i_episode_max, acc)
 
-        s2, coll2 = run_joint(env, agents, qls, step_max=steps_test, episode_max=ep_test,
+        s2, coll2, acc2 = run_joint(env, agents, qls, step_max=steps_test, episode_max=ep_test,
                               discount=discount, c_cost=collision_cost, noop=noop, testing=True, debug=False)
 
-        test_data_i = format_data(s2, coll2, ep_test)
+        test_data_i = format_data(s2, coll2, ep_test, acc2)
 
         train_data.append(train_data_i)
         test_data.append(test_data_i)
