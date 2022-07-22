@@ -1,0 +1,90 @@
+[INPUT]
+a_req0:0...9
+a0:0...9
+
+[OUTPUT]
+same0:0...1
+a_shield0
+
+[INPUT]
+a_req1:0...9
+a1:0...9
+
+[OUTPUT]
+same1:0...1
+a_shield1
+
+
+[ENV_INIT]
+a_req0 = 9
+a0 = 9
+a_req1 = 9
+a1 = 9
+
+[SYS_INIT]
+a_shield0
+same0=0
+a_shield1
+same1=0
+
+[ENV_TRANS]
+a0 = 0 -> a_req0 = 0  \/ a_req0 = 9 \/ a_req0 = 3 \/ a_req0 = 1
+a0 = 1 -> a_req0 = 1  \/ a_req0 = 0 \/ a_req0 = 2 \/ a_req0 = 4
+a0 = 2 -> a_req0 = 2  \/ a_req0 = 1 \/ a_req0 = 5 \/ a_req0 = 9
+a0 = 3 -> a_req0 = 3  \/ a_req0 = 0 \/ a_req0 = 4 \/ a_req0 = 6 \/ a_req0 = 9
+a0 = 4 -> a_req0 = 4  \/ a_req0 = 1 \/ a_req0 = 3 \/ a_req0 = 5 \/ a_req0 = 7
+a0 = 5 -> a_req0 = 5  \/ a_req0 = 2 \/ a_req0 = 4 \/ a_req0 = 8 \/ a_req0 = 9
+a0 = 6 -> a_req0 = 6  \/ a_req0 = 9 \/ a_req0 = 3 \/ a_req0 = 7
+a0 = 7 -> a_req0 = 7  \/ a_req0 = 4 \/ a_req0 = 6 \/ a_req0 = 8 \/ a_req0 = 9
+a0 = 8 -> a_req0 = 8  \/ a_req0 = 9 \/ a_req0 = 5 \/ a_req0 = 7
+a0 = 9 -> a_req0 = 9  \/ a_req0 = 0 \/ a_req0 = 2 \/ a_req0 = 3 \/ a_req0 = 5 \/ a_req0 = 6 \/ a_req0 = 7 \/ a_req0 = 8
+
+a0 = 0 -> a0' = 0  \/ (a_req0 = 3 /\ a0' = 3) 
+a0 = 1 -> a0' = 1 
+a0 = 2 -> a0' = 2  \/ (a_req0 = 5 /\ a0' = 5) 
+a0 = 3 -> a0' = 3  \/ (a_req0 = 6 /\ a0' = 6) 
+a0 = 4 -> a0' = 4  \/ (a_req0 = 3 /\ a0' = 3)  \/ (a_req0 = 5 /\ a0' = 5)  \/ (a_req0 = 7 /\ a0' = 7) 
+a0 = 5 -> a0' = 5  \/ (a_req0 = 8 /\ a0' = 8) 
+a0 = 6 -> a0' = 6  \/ (a_req0 = 9 /\ a0' = 9)  \/ (a_req0 = 3 /\ a0' = 3)  \/ (a_req0 = 7 /\ a0' = 7) 
+a0 = 7 -> a0' = 7  \/ (a_req0 = 8 /\ a0' = 8)  \/ (a_req0 = 6 /\ a0' = 6) 
+a0 = 8 -> a0' = 8  \/ (a_req0 = 9 /\ a0' = 9)  \/ (a_req0 = 5 /\ a0' = 5)  \/ (a_req0 = 7 /\ a0' = 7) 
+a0 = 9 -> a0' = 9  \/ (a_req0 = 8 /\ a0' = 8) \/ (a_req0 = 6 /\ a0' = 6)
+
+a0 != 0 /\ a0 != 1 /\ a0 != 2 /\ a0 != 4 
+!a_shield0 -> a0' = a0
+
+a1 = 0 -> a_req1 = 0  \/ a_req1 = 9 \/ a_req1 = 3 \/ a_req1 = 1
+a1 = 1 -> a_req1 = 1  \/ a_req1 = 0 \/ a_req1 = 2 \/ a_req1 = 4
+a1 = 2 -> a_req1 = 2  \/ a_req1 = 1 \/ a_req1 = 5 \/ a_req1 = 9
+a1 = 3 -> a_req1 = 3  \/ a_req1 = 0 \/ a_req1 = 4 \/ a_req1 = 6 \/ a_req1 = 9
+a1 = 4 -> a_req1 = 4  \/ a_req1 = 1 \/ a_req1 = 3 \/ a_req1 = 5 \/ a_req1 = 7
+a1 = 5 -> a_req1 = 5  \/ a_req1 = 2 \/ a_req1 = 4 \/ a_req1 = 8 \/ a_req1 = 9
+a1 = 6 -> a_req1 = 6  \/ a_req1 = 9 \/ a_req1 = 3 \/ a_req1 = 7
+a1 = 7 -> a_req1 = 7  \/ a_req1 = 4 \/ a_req1 = 6 \/ a_req1 = 8 \/ a_req1 = 9
+a1 = 8 -> a_req1 = 8  \/ a_req1 = 9 \/ a_req1 = 5 \/ a_req1 = 7
+a1 = 9 -> a_req1 = 9  \/ a_req1 = 0 \/ a_req1 = 2 \/ a_req1 = 3 \/ a_req1 = 5 \/ a_req1 = 6 \/ a_req1 = 7 \/ a_req1 = 8
+
+a1 = 0 -> a1' = 0  \/ (a_req1 = 3 /\ a1' = 3) 
+a1 = 1 -> a1' = 1 
+a1 = 2 -> a1' = 2  \/ (a_req1 = 5 /\ a1' = 5) 
+a1 = 3 -> a1' = 3  \/ (a_req1 = 6 /\ a1' = 6) 
+a1 = 4 -> a1' = 4  \/ (a_req1 = 3 /\ a1' = 3)  \/ (a_req1 = 5 /\ a1' = 5)  \/ (a_req1 = 7 /\ a1' = 7) 
+a1 = 5 -> a1' = 5  \/ (a_req1 = 8 /\ a1' = 8) 
+a1 = 6 -> a1' = 6  \/ (a_req1 = 9 /\ a1' = 9)  \/ (a_req1 = 3 /\ a1' = 3)  \/ (a_req1 = 7 /\ a1' = 7) 
+a1 = 7 -> a1' = 7  \/ (a_req1 = 8 /\ a1' = 8)  \/ (a_req1 = 6 /\ a1' = 6) 
+a1 = 8 -> a1' = 8  \/ (a_req1 = 9 /\ a1' = 9)  \/ (a_req1 = 5 /\ a1' = 5)  \/ (a_req1 = 7 /\ a1' = 7) 
+a1 = 9 -> a1' = 9  \/ (a_req1 = 8 /\ a1' = 8) \/ (a_req1 = 6 /\ a1' = 6)
+
+a1 != 0 /\ a1 != 1 /\ a1 != 2 /\ a1 != 4 
+!a_shield1 -> a1' = a1
+
+
+[ENV_LIVENESS]
+
+[SYS_TRANS]
+a0' != a1' | a0 = 9 | a1 = 9 | a0' = 9 | a1' = 9 
+(a0' != a1 /\ a1' != a0) | a0 = 9 | a1 = 9
+same0' = 0 <-> (a_shield0')
+same1' = 0 <-> (a_shield1')
+
+[SYS_LIVENESS]
