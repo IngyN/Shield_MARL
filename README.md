@@ -1,13 +1,13 @@
 # Shield_MARL
 
-This repository contains the code for the [Safe multi-agent reinforcement learning via shielding](https://arxiv.org/pdf/2101.11196) paper. 
+This repository contains the code for the [Safe multi-agent reinforcement learning via shielding](https://arxiv.org/pdf/2101.11196) paper. Note that some of the shield files are not provided, they need to be synthesized first using [Slugs](https://github.com/VerifiableRobotics/slugs). 
 
 #### Prerequisites:
 - Python 3.6+
 - gym
 - matplotlib 3.0.0 
 - [multi-agent gridworld](https://github.com/IngyN/gym-grid-ma) for gridworld experiments
-- [particle environment](https://github.com/openai/multiagent-particle-envs) for deep MARL experiments (modified to be discretized - code missing).
+- The [particle environment](https://github.com/openai/multiagent-particle-envs) for the deep MARL experiments in the paper (modified to be discretized - code missing). The [CM3 Cooperative Navigation](https://github.com/011235813/cm3) scenario I used can be found [here](https://github.com/011235813/cm3/blob/master/env/multiagent-particle-envs/multiagent/scenarios/multi-goal_spread.py) and the config files for [Cross](https://github.com/011235813/cm3/blob/master/alg/config_particle_stage2_cross.json) (with 0.2 instead of 0.15) and [Antipodal](https://github.com/011235813/cm3/blob/master/alg/config_particle_stage2_antipodal.json).
 
 #### Code Structure:
 - `CQLearning.py`: contains an implementation of CQ-Learning (non-deep) following the [Game Theory and Multi-agent Reinforcement Learning](https://link.springer.com/chapter/10.1007/978-3-642-27645-3_14) book.
